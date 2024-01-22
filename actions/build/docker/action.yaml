@@ -7,6 +7,9 @@ inputs:
   VAULT_TOKEN: 
     description: Vault Token
     required: true
+  VAULT_SECRET_PATH:
+    description: Secret Path
+    required: true
   VAULT_SECRETS_CICD_PATH:
     description: Vault Secrets Path
     required: true
@@ -45,6 +48,16 @@ runs:
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} KCR_PASSWORD | KCR_PASSWORD;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} IMAGE_REPOSITORY | IMAGE_REPOSITORY;
 
+  - name: Create project and policies in registry
+    run: |
+      ${{ github.action_path }}/scripts/config.sh
+    shell: bash
+    env:
+      VAULT_TOKEN: ${{ inputs.VAULT_TOKEN }}
+      VAULT_SERVER: ${{ inputs.VAULT_SERVER }}
+      VAULT_SECRET_PATH: ${{ inputs.VAULT_SECRET_PATH }}
+      VAULT_SECRETS_CICD_PATH: ${{ inputs.$VAULT_SECRETS_CICD_PATH }}
+      
   - name: Login to KCR
     uses: docker/login-action@v1
     with:

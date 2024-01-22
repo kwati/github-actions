@@ -1,56 +1,61 @@
 #!/bin/bash
 
-HARBOR_ENDPOINT="http://kcr.khalti.com.np:5000/api/v2.0"
+set -xe
+
+HARBOR_ENDPOINT="https://${IMAGE_REPOSITORY}/api/v2.0"
 CREATE_PROJECT_ENDPOINT="$HARBOR_ENDPOINT/projects"
 GET_PROJECT_ENDPOINT="$HARBOR_ENDPOINT/projects?page=1&page_size=50&public=false&with_detail=false"
 RETENTATION_ENPOINT="$HARBOR_ENDPOINT/retentions"
+VAULT_TOKEN=$VAULT_TOKEN
+VAULT_SERVER=$VAULT_SERVER
 VAULT_PATH=$VAULT_SECRETS_CICD_PATH
+PROJECT_NAME=$(echo $VAULT_SECRET_PATH | awk -F '/' '{print $1}')
 
-curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/${VAULT_PATH}" | jq -r .data.ADMIN_PASSWORD > "$USERNAME"
-curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/${VAULT_PATH}" | jq -r .data.DB_PASSWORD > "$PASSWORD"
+USERNAME=$(curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/${VAULT_PATH}" | jq -r .data.KCR_USER)
+PASSWORD=$(curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/${VAULT_PATH}" | jq -r .data.KCR_PASSWORD)
 
-new_project="$1"
+NEW_PROJECT="$1"
 
 # Function to list existing projects
 list_projects() {
-    response=$(curl -s -u "$USERNAME:$PASSWORD" "$GET_PROJECT_ENDPOINT")
+    RESPONSE=$(curl -s -u "$USERNAME:$PASSWORD" "$GET_PROJECT_ENDPOINT")
     if [ $? -eq 0 ]; then
-        echo "$response" | jq -r '.[] | "\(.project_id) \(.name)"'
+        echo "$RESPONSE" | jq -r '.[] | "\(.project_id) \(.name)"'
     else
-        echo "Failed to fetch projects $response"
-        return 1
+        echo "Failed to fetch projects $RESPONSE" &> /dev/null
+        return 0
     fi
 }
 
 # Create Project
 create_project() {
-    project_list=$(list_projects)
-    for project in $project_list; do
-        if [ "$new_project" == "$project" ]; then
-            echo "Project Name already exists! Select a new project name and run the script again"
-            return
+    PROJECT_LIST=$(list_projects)
+    for project in $PROJECT_LIST; do
+        if [ "$NEW_PROJECT" == "$project" ]; then
+            echo "Project already exists" &> /dev/null
+            return 0
         fi
     done
 
-    response=$(curl -s -u "$USERNAME:$PASSWORD" -H "Content-Type: application/json" "$CREATE_PROJECT_ENDPOINT" -d "{\"project_name\":\"$new_project\",\"metadata\":{\"public\":\"false\"}}")
+    RESPONSE=$(curl -s -u "$USERNAME:$PASSWORD" -H "Content-Type: application/json" "$CREATE_PROJECT_ENDPOINT" -d "{\"project_name\":\"$NEW_PROJECT\",\"metadata\":{\"public\":\"false\"}}")
     
     if [ $? -eq 0 ]; then
-        echo "Project with name: $new_project created"
+        echo "Project with name: $NEW_PROJECT created"
     else
-        echo "Failed to create project $new_project. Status code: $?"
-        echo "Response: $response"
+        echo "Failed to create project $NEW_PROJECT. Status code: $?"
+        echo "RESPONSE: $RESPONSE"
     fi
 }
 
 # Function to get project id
 get_project_id() {
-    project_endpoint="$CREATE_PROJECT_ENDPOINT/$new_project"
-    response=$(curl -s -u "$USERNAME:$PASSWORD" "$project_endpoint")
+    project_endpoint="$CREATE_PROJECT_ENDPOINT/$NEW_PROJECT"
+    RESPONSE=$(curl -s -u "$USERNAME:$PASSWORD" "$project_endpoint")
     if [ $? -eq 0 ]; then
-        echo "$response" | jq -r '.project_id'
+        echo "$RESPONSE" | jq -r '.project_id'
     else
-        echo "Failed to fetch project id $response"
-        return 1
+        echo "Failed to fetch project id $RESPONSE"
+        return 0
     fi
 }
 
@@ -99,18 +104,14 @@ create_retention_policy() {
     }'
 
     # Send POST request
-    local response=$(curl  --write-out %{http_code} --silent --output /dev/null -s -u "$USERNAME:$PASSWORD" -H "Content-Type: application/json" "$RETENTATION_ENPOINT" -d "$payload")
-    # status_code=$(curl --write-out %{http_code} --silent --output /dev/null $)
+    local RESPONSE=$(curl  --write-out %{http_code} --silent --output /dev/null -s -u "$USERNAME:$PASSWORD" -H "Content-Type: application/json" "$RETENTATION_ENPOINT" -d "$payload")
 
-    if [ $response -eq 201 ]; then
+    if [ $RESPONSE -eq 201 ]; then
         echo "Retention policy created successfully"
     else
-        echo "Failed to create retention policy. Status code: $status_code"
-        echo "$response"
-        exit 1
+        echo "Retention policy already exists" &> /dev/null 
+
     fi
-
-
 }
 
 if [ "$#" -eq 0 ]; then
@@ -119,5 +120,5 @@ if [ "$#" -eq 0 ]; then
     exit 1
 fi
 
-create_project
+create_project ${PROJECT_NAME}
 create_retention_policy

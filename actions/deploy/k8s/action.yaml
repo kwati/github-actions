@@ -8,7 +8,7 @@ inputs:
     description: Vault Token
     required: true
   VAULT_SECRET_PATH:
-    description: Dev Secret Path
+    description: Secret Path
     required: true
   VAULT_SECRET_COMMON_PATH:
     description: K8s common Secret Path
