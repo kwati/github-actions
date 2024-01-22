@@ -56,7 +56,7 @@ runs:
       VAULT_TOKEN: ${{ inputs.VAULT_TOKEN }}
       VAULT_SERVER: ${{ inputs.VAULT_SERVER }}
       VAULT_SECRET_PATH: ${{ inputs.VAULT_SECRET_PATH }}
-      VAULT_SECRETS_CICD_PATH: ${{ inputs.$VAULT_SECRETS_CICD_PATH }}
+      VAULT_SECRETS_CICD_PATH: ${{ inputs.VAULT_SECRETS_CICD_PATH }}
       
   - name: Login to KCR
     uses: docker/login-action@v1
