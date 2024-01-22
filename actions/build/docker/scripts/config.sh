@@ -10,10 +10,9 @@ VAULT_TOKEN=$VAULT_TOKEN
 VAULT_SERVER=$VAULT_SERVER
 VAULT_PATH=$VAULT_SECRETS_CICD_PATH
 PROJECT_NAME=$(echo $VAULT_SECRET_PATH | awk -F '/' '{print $1}')
-
+# Pull registry credentials from Vault 
 USERNAME=$(curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/${VAULT_PATH}" | jq -r .data.KCR_USER)
 PASSWORD=$(curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/${VAULT_PATH}" | jq -r .data.KCR_PASSWORD)
-
 # Function to list existing projects
 list_projects() {
     RESPONSE=$(curl -s -u "$USERNAME:$PASSWORD" "$GET_PROJECT_ENDPOINT")
@@ -113,11 +112,5 @@ create_retention_policy() {
     fi
 }
 
-if [ "$#" -eq 0 ]; then
-    echo "No arguments provided. Please provide project name as an argument."
-    echo "Usage: bash create_project_retention_policy <project_name_to_create>"
-    exit 1
-fi
-
-create_project ${PROJECT_NAME}
+create_project "$PROJECT_NAME"
 create_retention_policy
