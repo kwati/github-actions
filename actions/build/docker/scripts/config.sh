@@ -14,8 +14,6 @@ PROJECT_NAME=$(echo $VAULT_SECRET_PATH | awk -F '/' '{print $1}')
 USERNAME=$(curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/${VAULT_PATH}" | jq -r .data.KCR_USER)
 PASSWORD=$(curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/${VAULT_PATH}" | jq -r .data.KCR_PASSWORD)
 
-NEW_PROJECT="$1"
-
 # Function to list existing projects
 list_projects() {
     RESPONSE=$(curl -s -u "$USERNAME:$PASSWORD" "$GET_PROJECT_ENDPOINT")
@@ -29,6 +27,7 @@ list_projects() {
 
 # Create Project
 create_project() {
+    NEW_PROJECT="$1"
     PROJECT_LIST=$(list_projects)
     for project in $PROJECT_LIST; do
         if [ "$NEW_PROJECT" == "$project" ]; then
