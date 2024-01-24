@@ -17,7 +17,7 @@ PASSWORD=$(curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/$
 list_projects() {
     RESPONSE=$(curl -s -u "$USERNAME:$PASSWORD" "$GET_PROJECT_ENDPOINT")
     if [ $? -eq 0 ]; then
-        echo "$RESPONSE" | jq -r '.[] | "\(.project_id) \(.name)"'
+        echo "$RESPONSE" | jq -r '.[] | "\(.name)"'
     else
         echo "Failed to fetch projects $RESPONSE" &> /dev/null
         return 0
