@@ -69,7 +69,7 @@ runs:
     run: |
       docker build ${{ inputs.BUILD_CONTEXT }} --file ${{ inputs.DOCKERFILE }} \
         --tag ${{ env.IMAGE_REPOSITORY }}/${{ github.repository }}-${{ inputs.ENVIRONMENT }}:${{ inputs.IMAGE_TAG }} \
-        --build-arg ENVIRONMENT=${{ inputs.ENVIRONMENT }} ${{ env.BUILD_ARGS }}
+        --build-arg ENVIRONMENT=${{ inputs.ENVIRONMENT }} ${{ inputs.BUILD_ARGS }}
       docker push ${{ env.IMAGE_REPOSITORY }}/${{ github.repository }}-${{ inputs.ENVIRONMENT }}:${{ inputs.IMAGE_TAG }}
       docker tag ${{ env.IMAGE_REPOSITORY }}/${{ github.repository }}-${{ inputs.ENVIRONMENT }}:${{ inputs.IMAGE_TAG }} \
       ${{ env.IMAGE_REPOSITORY }}/${{ github.repository }}-${{ inputs.ENVIRONMENT }}:latest
