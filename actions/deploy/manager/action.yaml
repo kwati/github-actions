@@ -88,17 +88,11 @@ runs:
       ssh-keyscan -H ${{ env.MANAGER_NODE_IP }} >> ~/.ssh/known_hosts
     shell: bash
   
-  - name: Login to KCR
-    uses: docker/login-action@v1
-    with:
-      registry: ${{ env.IMAGE_REPOSITORY }}
-      username: ${{ env.KCR_USER }}
-      password: ${{ env.KCR_PASSWORD }}
-
   - name: Rsync to Manager Node
     run: |
       ssh ${{ env.DEPLOY_USER }}@${{ env.MANAGER_NODE_IP }} "chown -R ${{ env.DEPLOY_USER }}: /opt/${{ env.PROJECT_NAME }} && rm -rf /opt/${{ env.PROJECT_NAME }}/*"
       rsync -avpPz --exclude ".git" --exclude ".gitignore" ./ ${{ env.DEPLOY_USER }}@${{ env.MANAGER_NODE_IP }}:/opt/${{ env.PROJECT_NAME }}
+      ssh ${{ env.DEPLOY_USER }}@${{ env.MANAGER_NODE_IP }} 'docker login https://${{ env.IMAGE_REPOSITORY }} --username ${{ env.KCR_USER }} --password ${{ env.KCR_PASSWORD }}'
       ssh ${{ env.DEPLOY_USER }}@${{ env.MANAGER_NODE_IP }} 'cd /opt/${{ env.PROJECT_NAME }} && docker pull ${{ env.IMAGE_REPOSITORY }}/${{ github.repository }}-${{ inputs.ENVIRONMENT }}:${{ inputs.IMAGE_TAG }}'
       #ssh ${{ env.DEPLOY_USER }}@${{ env.MANAGER_NODE_IP }} 'cd /opt/${{ env.PROJECT_NAME }} && docker-compose -f docker-compose-manager.yml down && docker-compose -f docker-compose-manager.yml up -d'
     shell: bash
