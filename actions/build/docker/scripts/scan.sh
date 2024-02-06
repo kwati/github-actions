@@ -18,7 +18,7 @@ PASSWORD=$(curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/$
 
 
 scan() {
-    local RESPONSE=$(curl -X post -w "%{http_code}" --silent --output /dev/null -s -u "$USERNAME:$PASSWORD" "$ARTIFACT_SCAN_ENDPOINT")
+    local RESPONSE=$(curl -w "%{http_code}" --silent --output /dev/null -s -u "$USERNAME:$PASSWORD" "$ARTIFACT_SCAN_ENDPOINT")
     echo $RESPONSE
 
     if [ "$RESPONSE" -eq 201 ]; then
