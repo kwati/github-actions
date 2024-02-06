@@ -7,7 +7,7 @@ VAULT_TOKEN=$VAULT_TOKEN
 VAULT_SERVER=$VAULT_SERVER
 VAULT_PATH=$VAULT_SECRETS_CICD_PATH
 PROJECT_NAME=$(echo $VAULT_SECRET_PATH | awk -F '/' '{print $1}')
-REPO_NAME=$(echo $1 | awk -F '/' '{print $(NF-1)}')
+REPO_NAME=$(echo $1 | awk -F '/' '{print $(NF-2)}')
 ARTIFACT_SCAN_ENDPOINT="${HARBOR_ENDPOINT}/projects/${PROJECT_NAME}/repositories/${REPO_NAME}/artifacts/${2}/scan"
 
 
@@ -18,10 +18,10 @@ PASSWORD=$(curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/$
 
 
 scan() {
-    local RESPONSE=$(curl -w "%{http_code}" --silent --output /dev/null -s -u "$USERNAME:$PASSWORD" "$ARTIFACT_SCAN_ENDPOINT")
+    local RESPONSE=$(curl -X POST -w "%{http_code}" --silent --output /dev/null -u "$USERNAME:$PASSWORD" -H "Accept: application/json"  "$ARTIFACT_SCAN_ENDPOINT")
     echo $RESPONSE
 
-    if [ "$RESPONSE" -eq 201 ]; then
+    if [ "$RESPONSE" -eq 0 ]; then
         echo "Scan successfully initiated"
     else
         echo "Failed to start scan" &> /dev/null
