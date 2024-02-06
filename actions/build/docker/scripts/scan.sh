@@ -6,7 +6,7 @@ VAULT_TOKEN=$VAULT_TOKEN
 VAULT_SERVER=$VAULT_SERVER
 VAULT_PATH=$VAULT_SECRETS_CICD_PATH
 PROJECT_NAME=$(echo $VAULT_SECRET_PATH | awk -F '/' '{print $1}')
-ARTIFACT_SCAN_ENDPOINT="https://${HARBOR_ENDPOINT}/projects/${PROJECT_NAME}/repositories/${1}/artifacts/${2}/scan"
+ARTIFACT_SCAN_ENDPOINT="${HARBOR_ENDPOINT}/projects/${PROJECT_NAME}/repositories/${1}/artifacts/${2}/scan"
 
 
 #Pull creds from vault
