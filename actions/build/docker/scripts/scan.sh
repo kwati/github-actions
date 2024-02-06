@@ -20,7 +20,7 @@ scan() {
     if [ "$RESPONSE" -eq 201 ]; then
         echo "Scan successfully initiated"
     else
-        echo "Failed to start scan"
+        echo "Failed to start scan" &> /dev/null
     fi
 }
 
