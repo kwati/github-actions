@@ -2,6 +2,7 @@
 set -xe
 
 HARBOR_ENDPOINT="https://${IMAGE_REPOSITORY}/api/v2.0"
+echo $IMAGE_REPOSITORY
 VAULT_TOKEN=$VAULT_TOKEN
 VAULT_SERVER=$VAULT_SERVER
 VAULT_PATH=$VAULT_SECRETS_CICD_PATH
@@ -16,7 +17,7 @@ PASSWORD=$(curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/$
 
 
 scan() {
-    local RESPONSE=$(curl -w "%{http_code}" --silent --output /dev/null -s -u "$USERNAME:$PASSWORD" "$ARTIFACT_SCAN_ENDPOINT")
+    local RESPONSE=$(curl -X post -w "%{http_code}" --silent --output /dev/null -s -u "$USERNAME:$PASSWORD" "$ARTIFACT_SCAN_ENDPOINT")
     echo $RESPONSE
 
     if [ "$RESPONSE" -eq 201 ]; then
