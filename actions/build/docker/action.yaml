@@ -76,6 +76,7 @@ runs:
   
   - name: Scan Individual Artifact
     run: |
+      chmod +x ${{ github.action_path }}/scripts/scan.sh
       ${{ github.action_path }}/scripts/scan.sh ${{ github.repository }}-${{ inputs.ENVIRONMENT }} ${{ inputs.IMAGE_TAG }}
     shell: bash
     env:
