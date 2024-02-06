@@ -21,7 +21,7 @@ scan() {
     local RESPONSE=$(curl -X POST -w "%{http_code}" --silent --output /dev/null -u "$USERNAME:$PASSWORD" -H "Accept: application/json"  "$ARTIFACT_SCAN_ENDPOINT")
     echo $RESPONSE
 
-    if [ "$RESPONSE" -eq 0 ]; then
+    if [ "$RESPONSE" -eq 202 ]; then
         echo "Scan successfully initiated"
     else
         echo "Failed to start scan" &> /dev/null
