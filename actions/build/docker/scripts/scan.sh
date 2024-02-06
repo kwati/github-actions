@@ -23,4 +23,4 @@ scan() {
     fi
 }
 
-scan()
+scan
