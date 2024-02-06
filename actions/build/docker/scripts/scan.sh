@@ -7,7 +7,7 @@ VAULT_TOKEN=$VAULT_TOKEN
 VAULT_SERVER=$VAULT_SERVER
 VAULT_PATH=$VAULT_SECRETS_CICD_PATH
 PROJECT_NAME=$(echo $VAULT_SECRET_PATH | awk -F '/' '{print $1}')
-REPO_NAME=$(echo $1 | awk -F '/' '{print $(NF-2)}')
+REPO_NAME=$(echo $1 | awk -F '/' '{print $(NF)}')
 ARTIFACT_SCAN_ENDPOINT="${HARBOR_ENDPOINT}/projects/${PROJECT_NAME}/repositories/${REPO_NAME}/artifacts/${2}/scan"
 
 
