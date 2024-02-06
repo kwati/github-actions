@@ -1,10 +1,11 @@
 #!/bin/bash
 HARBOR_ENDPOINT="https://${IMAGE_REPOSITORY}/api/v2.0"
-ARTIFACT_SCAN_ENDPOINT="https://${HARBOR_ENDPOINT}/api/v2.0/projects/${1}/repositories/${2}/artifacts/${3}/scan"
 VAULT_TOKEN=$VAULT_TOKEN
 VAULT_SERVER=$VAULT_SERVER
 VAULT_PATH=$VAULT_SECRETS_CICD_PATH
 PROJECT_NAME=$(echo $VAULT_SECRET_PATH | awk -F '/' '{print $1}')
+ARTIFACT_SCAN_ENDPOINT="https://${HARBOR_ENDPOINT}/api/v2.0/projects/${PROJECT_NAME}/repositories/${2}/artifacts/${3}/scan"
+
 
 #Pull creds from vault
 
