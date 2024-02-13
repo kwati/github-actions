@@ -54,7 +54,6 @@ runs:
       registry: ${{ env.IMAGE_REPOSITORY }}
       username: ${{ env.KCR_USER }}
       password: ${{ env.KCR_PASSWORD }}
-    shell: bash
   
   - name: Deploy To Staging Server
     run: |
