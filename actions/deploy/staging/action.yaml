@@ -47,17 +47,11 @@ runs:
     run: |
       ssh-keyscan -H ${{ env.MINION_STAGING_SERVER }} >> ~/.ssh/known_hosts
     shell: bash
-
-  - name: Login to KCR
-    uses: docker/login-action@v1
-    with:
-      registry: ${{ env.IMAGE_REPOSITORY }}
-      username: ${{ env.KCR_USER }}
-      password: ${{ env.KCR_PASSWORD }}
   
   - name: Deploy To Staging Server
     run: |
       ssh root@${{ env.MINION_STAGING_SERVER }} "docker stop ${{ env.ENVIRONMENT }}-${{ env.PROJECT_NAME }} || true && docker rm ${{ env.ENVIRONMENT }}-${{ env.PROJECT_NAME }} || true"
+      ssh root@${{ env.MINION_STAGING_SERVER }} "docker login https://${{ env.IMAGE_REPOSITORY }} --username ${{ env.KCR_USER }} --password ${{ env.KCR_PASSWORD }}"
       ssh root@${{ env.MINION_STAGING_SERVER }} "docker pull ${{ env.IMAGE_REPOSITORY }}/${{github.repository}}-${{ env.ENVIRONMENT }}:${{ inputs.IMAGE_TAG }}"
       ssh root@${{ env.MINION_STAGING_SERVER }} "docker run -d --name ${{ env.ENVIRONMENT }}-${{ env.PROJECT_NAME }} -p ${{ env.PORT }}:80 ${{ env.IMAGE_REPOSITORY }}/${{github.repository}}-${{ env.ENVIRONMENT }}:${{ inputs.IMAGE_TAG }}"
     shell: bash
