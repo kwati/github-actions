@@ -1,0 +1,65 @@
+name: SonarQube Scan
+description: Scan code with sonarqube
+inputs:
+  PROJECT_NAME:
+    description: Project Name
+    required: true
+  VAULT_SERVER:
+    description: "Vault server address"
+    required: true
+  VAULT_TOKEN:
+    description:  "Vault token for authentication"
+    required: true
+  VAULT_SECRET_PATH:
+    description: "Secret path in vault to get the sonarqube credentials"
+    default: "true"
+  SONARQUBE_HOST:
+    description: Sonarqube Host
+    type: string
+  SONARQUBE_TOKEN:
+    description: Sonarqube Token
+    type: string
+  GITHUB_TOKEN:
+    description: Github Token
+    type: string
+  PYTHON_VERSION:
+    description: Python VERSION
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Import Secrets from Vault
+      uses: hashicorp/vault-action@v2
+      with:
+        url: https://${{ inputs.VAULT_SERVER }}/
+        token: ${{ inputs.VAULT_TOKEN }}
+        tlsSkipVerify: true
+        secrets: |
+          ${{ inputs.VAULT_SECRET_PATH }} SONARQUBE_HOST | SONARQUBE_HOST;
+          ${{ inputs.VAULT_SECRET_PATH }} SONARQUBE_TOKEN | SONARQUBE_TOKEN;
+          ${{ inputs.VAULT_SECRET_PATH }} GITHUB_TOKEN | GITHUB_TOKEN;
+          
+    - name: Setup SonarQube
+      uses: warchant/setup-sonar-scanner@v7
+    # Run sonar-scanner
+    - name: SonarQube Scan
+      run: sonar-scanner
+           -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
+           -Dsonar.login=${{ secrets.SONARQUBE_TOKEN }}
+           -Dsonar.organization=${{ secrets.SONARQUBE_ORGANIZATION }}
+           -Dsonar.projectKey=${{ inputs.PROJECT_NAME }}
+           -Dsonar.sources=$GITHUB_WORKSPACE
+      shell: bash
+
+    - name: SonarQube Quality Gate check
+      id: sonarqube-quality-gate-check
+      uses: sonarsource/sonarqube-quality-gate-action@master
+      env:
+       SONAR_TOKEN: ${{ env.SONARQUBE_TOKEN }}
+       SONAR_HOST_URL: ${{ env.SONARQUBE_HOST }}
+
+    - name: Scan Report
+      run: |
+        cat .scannerwork/report-task.txt
+      shell: bash
