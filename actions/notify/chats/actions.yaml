@@ -1,0 +1,36 @@
+name: Send notification to Google Chats
+description: Send notification to Google Chats
+inputs:
+  VAULT_SERVER:
+    description: Build Image Tag
+    required: true
+  VAULT_TOKEN: 
+    description: Vault Token
+    required: true
+  VAULT_SECRETS_CICD_PATH:
+    description: Vault Secrets Path
+    required: true
+  MESSAGE:
+    description: Notfication Message
+    required: true
+runs:
+  using: composite
+  steps:
+  - name: Import Secrets From Vault
+    uses: hashicorp/vault-action@v2
+    with:
+      url: https://${{ inputs.VAULT_SERVER }}/
+      token: ${{ inputs.VAULT_TOKEN }}
+      tlsSkipVerify: true
+      secrets: |
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} CHATS_SPACE_ID | CHATS_SPACE_ID;
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} CHATS_MESSAGE_KEY | CHATS_MESSAGE_KEY;
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} CHATS_TOKEN | CHATS_TOKEN;
+
+  - name: Send notification
+    run: |
+      curl --location "https://chat.googleapis.com/v1/spaces/${{ env.CHATS_SPACE_ID }}/messages?key=${{ env.CHATS_MESSAGE_KEY }}&token=${{ env.CHATS_TOKEN }}" \
+        --header 'Content-Type: application/json' \
+        --data '{
+            "text": "${{ inputs.MESSAGE }}"
+        }'
