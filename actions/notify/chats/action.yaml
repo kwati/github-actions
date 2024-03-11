@@ -34,3 +34,4 @@ runs:
         --data '{
             "text": "${{ inputs.MESSAGE }}"
         }'
+    shell: bash
