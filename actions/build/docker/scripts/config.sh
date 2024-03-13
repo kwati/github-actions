@@ -9,7 +9,7 @@ RETENTATION_ENPOINT="$HARBOR_ENDPOINT/retentions"
 VAULT_TOKEN=$VAULT_TOKEN
 VAULT_SERVER=$VAULT_SERVER
 VAULT_PATH=$VAULT_SECRETS_CICD_PATH
-PROJECT_NAME=$(echo $VAULT_SECRET_PATH | awk -F '/' '{print $1}')
+PROJECT_NAME=$PROJECT_NAME
 # Pull registry credentials from Vault 
 USERNAME=$(curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/${VAULT_PATH}" | jq -r .data.KCR_USER)
 PASSWORD=$(curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/${VAULT_PATH}" | jq -r .data.KCR_PASSWORD)

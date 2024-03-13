@@ -7,9 +7,6 @@ inputs:
   VAULT_TOKEN: 
     description: Vault Token
     required: true
-  VAULT_SECRET_PATH:
-    description: Secret Path
-    required: true
   VAULT_SECRETS_CICD_PATH:
     description: Vault Secrets Path
     required: true
@@ -55,7 +52,7 @@ runs:
     env:
       VAULT_TOKEN: ${{ inputs.VAULT_TOKEN }}
       VAULT_SERVER: ${{ inputs.VAULT_SERVER }}
-      VAULT_SECRET_PATH: ${{ inputs.VAULT_SECRET_PATH }}
+      PROJECT_NAME: ${{ github.repository }}
       VAULT_SECRETS_CICD_PATH: ${{ inputs.VAULT_SECRETS_CICD_PATH }}
       
   - name: Login to KCR
