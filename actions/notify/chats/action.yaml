@@ -32,6 +32,6 @@ runs:
       curl --location "https://chat.googleapis.com/v1/spaces/${{ env.CHATS_SPACE_ID }}/messages?key=${{ env.CHATS_MESSAGE_KEY }}&token=${{ env.CHATS_TOKEN }}" \
         --header 'Content-Type: application/json' \
         --data '{
-            "text": "${{ inputs.MESSAGE }}"
+            "text": ${{ tojson(inputs.message) }}
         }'
     shell: bash
