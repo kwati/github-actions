@@ -26,10 +26,7 @@ inputs:
   GITHUB_TOKEN:
     description: Github Token
     type: string
-outputs:
-  quality_check:
-    description: >
-      The resulting Status SonarQube 
+
 
 runs:
   using: composite
@@ -44,18 +41,13 @@ runs:
         secrets: |
           ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_HOST | SONARQUBE_HOST;
           ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_TOKEN | SONARQUBE_TOKEN;
-          ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_ORGANIZATION | SONARQUBE_ORGANIZATION
 
     - name: Import Secrets
       if: ${{ inputs.VAULT_ENABLED == 'false' }}
       run: |
         echo "SONARQUBE_HOST=${{ inputs.SONARQUBE_HOST }}"  >> $GITHUB_ENV
         echo "SONARQUBE_TOKEN=${{ inputs.SONARQUBE_TOKEN }}"  >> $GITHUB_ENV
-        echo "SONARQUBE_ORGANIZATION=${{ inputs.SONARQUBE_ORGANIZATION }}" >> $GITHUB_ENV
       shell: bash
-
-    - name: Checkout
-      uses: actions/checkout@v3
 
     - name: Setup SonarQube
       uses: warchant/setup-sonar-scanner@v7
@@ -64,7 +56,6 @@ runs:
       run: sonar-scanner
         -Dsonar.host.url=${{ env.SONARQUBE_HOST }}
         -Dsonar.login=${{ env.SONARQUBE_TOKEN }}
-        -Dsonar.organization=${{ env.SONARQUBE_ORGANIZATION }}
         -Dsonar.projectKey=${{ inputs.PROJECT_NAME }}
         -Dsonar.sources=${{ github.workspace }}
       shell: bash
