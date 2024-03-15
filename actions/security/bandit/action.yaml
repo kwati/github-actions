@@ -38,8 +38,8 @@ runs:
       python3 ${{ inputs.github_workspace }}/.helpers/scripts/formater.py report.csv output.md
     shell: bash
   
-  - name: PR comment with file
-    uses: thollander/actions-comment-pull-request@v2
-    with:
-      filePath: ${{ inputs.github_workspace }}/output.md
+  # - name: PR comment with file
+  #   uses: thollander/actions-comment-pull-request@v2
+  #   with:
+  #     filePath: ${{ inputs.github_workspace }}/output.md
 
