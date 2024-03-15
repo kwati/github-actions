@@ -35,7 +35,7 @@ runs:
       if: ${{ inputs.VAULT_ENABLED == 'true' }}
       uses: hashicorp/vault-action@v2.4.0
       with:
-        url: ${{ inputs.VAULT_SERVER }}
+        url: https://${{ inputs.VAULT_SERVER }}
         token: ${{ inputs.VAULT_TOKEN }}
         tlsSkipVerify: true
         secrets: |
