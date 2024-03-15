@@ -66,6 +66,11 @@ runs:
       env:
        SONAR_TOKEN: ${{ env.SONARQUBE_TOKEN }}
        SONAR_HOST_URL: ${{ env.SONARQUBE_HOST }}
+      
+    - name: Get Quality Gate Status
+      run: |
+        echo "Quality Gate Status: ${{ steps.sonarqube-quality-gate-check.outputs.status }}"
+      shell: bash
 
     - name: Scan Report
       run: |
