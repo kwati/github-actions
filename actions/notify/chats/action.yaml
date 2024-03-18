@@ -10,7 +10,7 @@ inputs:
   VAULT_SECRETS_CICD_PATH:
     description: Vault Secrets Path
     required: true
-  MESSAGE:
+  ENVIRONMENT:
     description: Notfication Message
     required: true
 runs:
@@ -29,9 +29,43 @@ runs:
 
   - name: Send notification
     run: |
-      curl --location "https://chat.googleapis.com/v1/spaces/${{ env.CHATS_SPACE_ID }}/messages?key=${{ env.CHATS_MESSAGE_KEY }}&token=${{ env.CHATS_TOKEN }}" \
-        --header 'Content-Type: application/json' \
-        --data '{
-            "text": "${{ inputs.MESSAGE }}"
-        }'
+       curl -X POST \
+          -H "Content-Type: application/json" \
+          -d '{
+                "cards": [
+                  {
+              "header": {
+                "title": "<b>${{ inputs.ENVIRONMENT }} ${{ github.workflow }}</b>",
+                "subtitle": "<b>Author: ${{ github.actor }}</b>"
+              },
+              "sections": [
+                {
+                  "widgets": [
+                    {
+                      "textParagraph": {
+                        "text": "Status: ${{ job.status }}"
+                      }
+                    },
+                    {
+                      "textParagraph": {
+                        "text": "Commit Message: ${{ github.event.head_commit.message }}"
+                      }
+                    },
+                    {
+                      "textParagraph": {
+                        "text": "Environment: ${{ inputs.ENVIRONMENT }}"
+                      }
+                    },
+                    {
+                      "textParagraph": {
+                        "text": "TimeStamp: ${{ github.event.head_commit.timestamp }}"
+                      }
+                    }
+                  ]
+                }
+              ]
+                  }
+                ]
+              }' \
+              "https://chat.googleapis.com/v1/spaces/${{ env.CHATS_SPACE_ID }}/messages?key=${{ env.CHATS_MESSAGE_KEY }}&token=${{ env.CHATS_TOKEN }}"
     shell: bash
