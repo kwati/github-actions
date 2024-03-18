@@ -1,11 +1,5 @@
-# File: .github/actions/bandit-analysis.yml
 name: Vuln and Secret Analysis
 description: Analyze code with Bandit and Comment on PR
-
-inputs:
-  github_workspace:
-    description: GitHub workspace path
-    required: true
 
 runs:
   using: composite
@@ -15,7 +9,7 @@ runs:
     uses: trufflesecurity/trufflehog@main
     continue-on-error: true
     with:
-      path: ${{ inputs.github_workspace }}
+      path: ${{ github.workspace }}
       base: "${{ github.event.repository.default_branch }}"
       head: HEAD
       extra_args: --debug
@@ -35,11 +29,11 @@ runs:
   - name: Format output for PR
     run: |
       pip install tabulate
-      python3 ${{ inputs.github_workspace }}/.helpers/scripts/formater.py report.csv output.md
+      python3 ${{ github.action_path }}/scripts/formater.py report.csv output.md
     shell: bash
   
   - name: PR comment with file
     uses: thollander/actions-comment-pull-request@v2
     with:
-      filePath: ${{ inputs.github_workspace }}/output.md
+      filePath: ${{ github.workspace }}/output.md
 
