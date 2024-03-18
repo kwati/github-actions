@@ -29,6 +29,7 @@ runs:
         ${{ inputs.VAULT_SECRET_COMMON_PATH }} ENVIRONMENT | ENVIRONMENT;
         
   - name: Send notification
+    if: always()
     run: |
        curl -X POST \
           -H "Content-Type: application/json" \

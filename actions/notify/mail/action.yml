@@ -31,6 +31,7 @@ runs:
         ${{inputs.VAULT_SECRET_COMMON_PATH}} TO_ADDRESS | TO_ADDRESS;
 
   - name: Send Mail
+    if: always()
     uses: dawidd6/action-send-mail@v3.7.1
     with:
       server_address: ${{ env.EMAIL_HOST }}
