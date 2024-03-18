@@ -27,7 +27,6 @@ inputs:
     description: Github Token
     type: string
 
-
 runs:
   using: composite
   steps:
@@ -41,14 +40,14 @@ runs:
         secrets: |
           ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_HOST | SONARQUBE_HOST;
           ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_TOKEN | SONARQUBE_TOKEN;
-
+  
     - name: Import Secrets
       if: ${{ inputs.VAULT_ENABLED == 'false' }}
       run: |
         echo "SONARQUBE_HOST=${{ inputs.SONARQUBE_HOST }}"  >> $GITHUB_ENV
         echo "SONARQUBE_TOKEN=${{ inputs.SONARQUBE_TOKEN }}"  >> $GITHUB_ENV
       shell: bash
-
+  
     - name: Setup SonarQube
       uses: warchant/setup-sonar-scanner@v7
 
@@ -71,4 +70,37 @@ runs:
       run: |
         cat .scannerwork/report-task.txt
       shell: bash
+
+    - name: Secret Scan
+      id: trufflehog
+      uses: trufflesecurity/trufflehog@main
+      continue-on-error: true
+      with:
+        path: ${{ github.workspace }}
+        base: "${{ github.event.repository.default_branch }}"
+        head: HEAD
+        extra_args: --debug
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.11.2
+
+    - name: Install and scan with Bandit
+      run: | 
+        pip install bandit
+        python3 -m bandit -a file -r -ll -ii . -f csv -o report.csv --exit-zero
+        python3 -m bandit -a file -r -ll -ii . -f txt -o report.txt --exit-zero
+      shell: bash
+
+    - name: Format output for PR
+      run: |
+        pip install tabulate
+        python3 ${{ github.action_path }}/scripts/formater.py report.csv output.md
+      shell: bash
+    
+    - name: PR comment with file
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: ${{ github.workspace }}/output.md
 
