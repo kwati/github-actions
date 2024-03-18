@@ -1,0 +1,57 @@
+name: Staging Deployment
+description: Deploy application to Staging Server
+inputs:
+  VAULT_SERVER: 
+    description: Vault Server URL
+    required: true
+  VAULT_TOKEN:
+    description: Vault Token
+    required: true
+  VAULT_SECRETS_CICD_PATH:
+    description: CICD Common Path
+    required: true
+  IMAGE_TAG:
+    description: Image Tag
+    required: true
+  VAULT_SECRET_PATH:
+    description: Vault Secret Path
+    required: true
+
+runs:
+  using: composite
+  steps:
+  - name: Import Secrets From Vault
+    uses: hashicorp/vault-action@v2
+    with:
+      url: https://${{ inputs.VAULT_SERVER }}
+      token: ${{ inputs.VAULT_TOKEN }}
+      tlsSkipVerify: true
+      secrets: |
+        ${{ inputs.VAULT_SECRET_PATH }} PROJECT_NAME | PROJECT_NAME;
+        ${{ inputs.VAULT_SECRET_PATH }} ENVIRONMENT | ENVIRONMENT;
+        ${{ inputs.VAULT_SECRET_PATH }} PORT | PORT;
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} KCR_USER | KCR_USER;        
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} KCR_PASSWORD | KCR_PASSWORD;
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} IMAGE_REPOSITORY | IMAGE_REPOSITORY;
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} SSH_KEY | SSH_KEY;
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} MINION_STAGING_SERVER | MINION_STAGING_SERVER;
+
+  - name: Install SSH Keys
+    uses: shimataro/ssh-key-action@v2
+    with:
+      key: ${{ env.SSH_KEY }}
+      known_hosts: 'SSH KEY'
+      if_key_exists: replace
+      
+  - name: Adding Known Hosts
+    run: |
+      ssh-keyscan -H ${{ env.MINION_STAGING_SERVER }} >> ~/.ssh/known_hosts
+    shell: bash
+  
+  - name: Deploy To Staging Server
+    run: |
+      ssh root@${{ env.MINION_STAGING_SERVER }} "docker stop ${{ env.ENVIRONMENT }}-${{ env.PROJECT_NAME }} || true && docker rm ${{ env.ENVIRONMENT }}-${{ env.PROJECT_NAME }} || true"
+      ssh root@${{ env.MINION_STAGING_SERVER }} "docker login https://${{ env.IMAGE_REPOSITORY }} --username ${{ env.KCR_USER }} --password ${{ env.KCR_PASSWORD }}"
+      ssh root@${{ env.MINION_STAGING_SERVER }} "docker pull ${{ env.IMAGE_REPOSITORY }}/${{github.repository}}-${{ env.ENVIRONMENT }}:${{ inputs.IMAGE_TAG }}"
+      ssh root@${{ env.MINION_STAGING_SERVER }} "docker run -d --name ${{ env.ENVIRONMENT }}-${{ env.PROJECT_NAME }} -p ${{ env.PORT }}:80 ${{ env.IMAGE_REPOSITORY }}/${{github.repository}}-${{ env.ENVIRONMENT }}:${{ inputs.IMAGE_TAG }}"
+    shell: bash
