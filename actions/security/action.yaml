@@ -20,7 +20,11 @@ inputs:
   SNYK_TOKEN:
     description: Snyk API Token
     required: true
-    default:  ""    
+    default:  ""
+  PYTHON_VERSION:
+    description: Python Version
+    required: true
+    default: "3.10"        
   PYTHON_DEP_PATH:
     description: Path for the Python Dependencies file
     required: true
@@ -72,6 +76,9 @@ runs:
         -Dsonar.login=${{ env.SONARQUBE_TOKEN }}
         -Dsonar.projectKey=${{ inputs.PROJECT_NAME }}
         -Dsonar.sources=${{ github.workspace }}
+        -Dsonar.pullrequest.key=${{github.event.pull_request.number}}
+        -Dsonar.pullrequest.branch=${{github.head_ref}}
+        -Dsonar.pullrequest.base=${{github.base_ref}}
       shell: bash
 
     - name: SonarQube Quality Gate check
@@ -99,7 +106,7 @@ runs:
     - name: Setup Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.11.2
+        python-version: ${{ inputs.PYTHON_VERSION }}
         cache: "pip"
         cache-dependency-path: ${{ inputs.PYTHON_DEP_PATH }}
         
