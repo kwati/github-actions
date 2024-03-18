@@ -119,7 +119,7 @@ runs:
     - name: Run Snyk to check for vulnerabilities
       run: |
         wget -q https://static.snyk.io/cli/latest/snyk-linux && mv ./snyk-linux ./snyk && chmod +x ./snyk
-        ./snyk auth ${{ inputs.SNYK_TOKEN }}
+        ./snyk auth ${{ env.SNYK_TOKEN }}
         ./snyk test --command=python3 --project-name=${{ inputs.PROJECT_NAME }} --sarif-file-output=snyk.sarif ${{ inputs.EXTRA_ARGS}}
       working-directory: ${{ inputs.PROJECT_APP_PATH }}
       shell: bash
