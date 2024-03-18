@@ -17,6 +17,20 @@ inputs:
   VAULT_TOKEN:
     description: VAULT Token
     type: string
+  SNYK_TOKEN:
+    description: Snyk API Token
+    required: true
+    default:  ""    
+  PYTHON_DEP_PATH:
+    description: Path for the Python Dependencies file
+    required: true
+    default: "./app/requirements.txt"    
+  PROJECT_APP_PATH:
+    description: Application Project Root Path
+    required: true
+    default: "./app"
+  EXTRA_ARGS:
+    description: Extra arguments of snyk cli
   SONARQUBE_HOST:
     description: Sonarqube Host
     type: string
@@ -40,6 +54,7 @@ runs:
         secrets: |
           ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_HOST | SONARQUBE_HOST;
           ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_TOKEN | SONARQUBE_TOKEN;
+          ${{ inputs.VAULT_SECRETS_PATH }} SNYK_TOKEN | SNYK_TOKEN;
   
     - name: Import Secrets
       if: ${{ inputs.VAULT_ENABLED == 'false' }}
@@ -85,6 +100,27 @@ runs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.11.2
+        cache: "pip"
+        cache-dependency-path: ${{ inputs.PYTHON_DEP_PATH }}
+        
+    - name: Install requirements
+      run: |
+        pip install --upgrade pip
+        pip install -r ${{ inputs.PYTHON_DEP_PATH }}
+      shell: bash
+
+    - name: Run Snyk to check for vulnerabilities
+      run: |
+        wget -q https://static.snyk.io/cli/latest/snyk-linux && mv ./snyk-linux ./snyk && chmod +x ./snyk
+        ./snyk auth ${{ inputs.SNYK_TOKEN }}
+        ./snyk test --command=python3 --project-name=${{ inputs.PROJECT_NAME }} --sarif-file-output=snyk.sarif ${{ inputs.EXTRA_ARGS}}
+      working-directory: ${{ inputs.PROJECT_APP_PATH }}
+      shell: bash
+
+    - name: Upload result to GitHub Code Scanning
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: ${{ inputs.PROJECT_APP_PATH }}/snyk.sarif
 
     - name: Install and scan with Bandit
       run: | 
