@@ -10,8 +10,7 @@ inputs:
   VAULT_SECRETS_CICD_PATH:
     description: Vault Secrets Path
     required: true
-  ENVIRONMENT:
-    description: Notfication Message
+
 runs:
   using: composite
   steps:
