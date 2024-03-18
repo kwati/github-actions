@@ -10,7 +10,7 @@ inputs:
   VAULT_SECRETS_CICD_PATH:
     description: Vault Secrets Path
     required: true
-  ENVIRONMENT:
+  VAULT_SECRET_COMMON_PATH:
     description: Notfication Message
     required: true
 runs:
@@ -26,7 +26,8 @@ runs:
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} CHATS_SPACE_ID | CHATS_SPACE_ID;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} CHATS_MESSAGE_KEY | CHATS_MESSAGE_KEY;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} CHATS_TOKEN | CHATS_TOKEN;
-
+        ${{ inputs.VAULT_SECRET_COMMON_PATH }} ENVIRONMENT | ENVIRONMENT;
+        
   - name: Send notification
     run: |
        curl -X POST \
@@ -57,7 +58,7 @@ runs:
                     },
                     {
                       "textParagraph": {
-                        "text": "Environment: ${{ inputs.ENVIRONMENT }}"
+                        "text": "Environment: ${{ env.ENVIRONMENT }}"
                       }
                     },
                     {
