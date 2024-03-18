@@ -35,12 +35,16 @@ runs:
                 "cards": [
                   {
               "header": {
-                "title": "<b>${{ github.workflow }}</b>",
-                "subtitle": "<b>Author: ${{ github.actor }}</b>"
+                "title": "<b>${{ github.workflow }}</b>"
               },
               "sections": [
                 {
                   "widgets": [
+                    {
+                      "textParagraph": {
+                        "text": "<b><font color=\"#00FF00\">Project: ${{ github.repository }}</font></b>"
+                      }
+                    },
                     {
                       "textParagraph": {
                         "text": "Status: ${{ job.status }}"
@@ -59,6 +63,11 @@ runs:
                     {
                       "textParagraph": {
                         "text": "TimeStamp: ${{ github.event.head_commit.timestamp }}"
+                      }
+                    },
+                    {
+                      "textParagraph": {
+                        "text": "<b><font color=\"#00FF00\">Author: ${{ github.actor }}</font></b>"
                       }
                     }
                   ]
