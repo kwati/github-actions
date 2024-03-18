@@ -12,7 +12,6 @@ inputs:
     required: true
   ENVIRONMENT:
     description: Notfication Message
-    required: true
 runs:
   using: composite
   steps:
@@ -35,7 +34,7 @@ runs:
                 "cards": [
                   {
               "header": {
-                "title": "<b>${{ inputs.ENVIRONMENT }} ${{ github.workflow }}</b>",
+                "title": "<b>${{ github.workflow }}</b>",
                 "subtitle": "<b>Author: ${{ github.actor }}</b>"
               },
               "sections": [
