@@ -109,6 +109,25 @@ runs:
         python-version: ${{ inputs.PYTHON_VERSION }}
         cache: "pip"
         cache-dependency-path: ${{ inputs.PYTHON_DEP_PATH }}
+
+
+    - name: Install and scan with Bandit
+      run: | 
+        pip install bandit
+        python3 -m bandit -a file -r -ll -ii . -f csv -o report.csv --exit-zero
+        python3 -m bandit -a file -r -ll -ii . -f txt -o report.txt --exit-zero
+      shell: bash
+
+    - name: Format output for PR
+      run: |
+        pip install tabulate
+        python3 ${{ github.action_path }}/scripts/formater.py report.csv output.md
+      shell: bash
+    
+    - name: PR comment with file
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: ${{ github.workspace }}/output.md        
         
     - name: Install requirements
       run: |
@@ -129,22 +148,4 @@ runs:
       uses: github/codeql-action/upload-sarif@v2
       with:
         sarif_file: ${{ inputs.PROJECT_APP_PATH }}/snyk.sarif
-
-    - name: Install and scan with Bandit
-      run: | 
-        pip install bandit
-        python3 -m bandit -a file -r -ll -ii . -f csv -o report.csv --exit-zero
-        python3 -m bandit -a file -r -ll -ii . -f txt -o report.txt --exit-zero
-      shell: bash
-
-    - name: Format output for PR
-      run: |
-        pip install tabulate
-        python3 ${{ github.action_path }}/scripts/formater.py report.csv output.md
-      shell: bash
-    
-    - name: PR comment with file
-      uses: thollander/actions-comment-pull-request@v2
-      with:
-        filePath: ${{ github.workspace }}/output.md
 
