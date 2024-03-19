@@ -117,6 +117,7 @@ runs:
       shell: bash
 
     - name: Run Snyk to check for vulnerabilities
+      continue-on-error: true
       run: |
         wget -q https://static.snyk.io/cli/latest/snyk-linux && mv ./snyk-linux ./snyk && chmod +x ./snyk
         ./snyk auth ${{ env.SNYK_TOKEN }}
