@@ -44,6 +44,22 @@ inputs:
   GITHUB_TOKEN:
     description: Github Token
     type: string
+  SONARQUBE_SCAN:
+    description: Enable Sonarqube Scan
+    type: boolean
+    default: true
+  TRUFFLEHOG_SCAN: 
+    description: Enable Trufflehog Scan
+    type: boolean
+    default: true
+  BANDIT_SCAN: 
+    description: Enable Bandit Scan
+    type: boolean
+    default: true
+  SNYK_SCAN: 
+    description: Enable Snyk Scan
+    type: boolean
+    default: true
 
 runs:
   using: composite
@@ -68,9 +84,11 @@ runs:
       shell: bash
   
     - name: Setup SonarQube
+      if: ${{ inputs.SONARQUBE_SCAN == 'true' }}
       uses: warchant/setup-sonar-scanner@v7
 
     - name: SonarQube Scan
+      if: ${{ inputs.SONARQUBE_SCAN == 'true' }}
       run: sonar-scanner
         -Dsonar.host.url=${{ env.SONARQUBE_HOST }}
         -Dsonar.login=${{ env.SONARQUBE_TOKEN }}
@@ -82,6 +100,7 @@ runs:
       shell: bash
 
     - name: SonarQube Quality Gate check
+      if: ${{ inputs.SONARQUBE_SCAN == 'true' }}
       id: sonarqube-quality-gate-check
       uses: sonarsource/sonarqube-quality-gate-action@master
       env:
@@ -89,11 +108,13 @@ runs:
        SONAR_HOST_URL: ${{ env.SONARQUBE_HOST }}
 
     - name: Scan Report
+      if: ${{ inputs.SONARQUBE_SCAN == 'true' }}
       run: |
         cat .scannerwork/report-task.txt
       shell: bash
 
     - name: Secret Scan
+      if: ${{ inputs.TRUFFLEHOG_SCAN == 'true' }}
       id: trufflehog
       uses: trufflesecurity/trufflehog@main
       continue-on-error: true
@@ -104,38 +125,42 @@ runs:
         extra_args: --debug
 
     - name: Setup Python
+      if: ${{ inputs.BANDIT_SCAN == 'true' and inputs.SNYK_SCAN == 'true' }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ inputs.PYTHON_VERSION }}
         cache: "pip"
         cache-dependency-path: ${{ inputs.PYTHON_DEP_PATH }}
 
-
     - name: Install and scan with Bandit
+      if : ${{ inputs.BANDIT_SCAN == 'true' }}
       run: | 
         pip install bandit
         python3 -m bandit -a file -r -ll -ii . -f csv -o report.csv --exit-zero
         python3 -m bandit -a file -r -ll -ii . -f txt -o report.txt --exit-zero
       shell: bash
 
-    - name: Format output for PR
+    - name: Format output for PR Bandit
+      if : ${{ inputs.BANDIT_SCAN == 'true' }}
       run: |
         pip install tabulate
         python3 ${{ github.action_path }}/scripts/formater.py report.csv output.md
       shell: bash
     
-    - name: PR comment with file
+    - name: PR comment with file Bandit
+      if : ${{ inputs.BANDIT_SCAN == 'true' }}
       uses: thollander/actions-comment-pull-request@v2
       with:
         filePath: ${{ github.workspace }}/output.md        
         
-    - name: Install requirements
-      run: |
-        pip install --upgrade pip
-        pip install -r ${{ inputs.PYTHON_DEP_PATH }}
-      shell: bash
+    #- name: Install requirements
+    #  run: |
+    #    pip install --upgrade pip
+    #    pip install -r ${{ inputs.PYTHON_DEP_PATH }}
+    #  shell: bash
 
     - name: Run Snyk to check for vulnerabilities
+      if: ${{ inputs.SNYK_SCAN == 'true' }}
       continue-on-error: true
       run: |
         wget -q https://static.snyk.io/cli/latest/snyk-linux && mv ./snyk-linux ./snyk && chmod +x ./snyk
@@ -144,8 +169,8 @@ runs:
       working-directory: ${{ inputs.PROJECT_APP_PATH }}
       shell: bash
 
-    - name: Upload result to GitHub Code Scanning
-      uses: github/codeql-action/upload-sarif@v2
-      with:
-        sarif_file: ${{ inputs.PROJECT_APP_PATH }}/snyk.sarif
+    #- name: Upload result to GitHub Code Scanning
+    #  uses: github/codeql-action/upload-sarif@v2
+    #  with:
+    #    sarif_file: ${{ inputs.PROJECT_APP_PATH }}/snyk.sarif
 
