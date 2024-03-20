@@ -73,14 +73,4 @@ runs:
       docker push ${{ env.IMAGE_REPOSITORY }}/${{ github.repository }}-${{ inputs.ENVIRONMENT }}:latest
       echo "Pushed Docker Image ${{ env.IMAGE_REPOSITORY }}/${{ github.repository }}-${{ inputs.ENVIRONMENT }}:latest"
     shell: bash
-  
-  - name: Scan Individual Artifact
-    run: |
-      chmod +x ${{ github.action_path }}/scripts/scan.sh
-      ${{ github.action_path }}/scripts/scan.sh ${{ github.repository }}-${{ inputs.ENVIRONMENT }} ${{ inputs.IMAGE_TAG }}
-    shell: bash
-    env:
-      VAULT_TOKEN: ${{ inputs.VAULT_TOKEN }}
-      VAULT_SERVER: ${{ inputs.VAULT_SERVER }}
-      VAULT_SECRET_PATH: ${{ inputs.VAULT_SECRET_PATH }}
-      VAULT_SECRETS_CICD_PATH: ${{ inputs.VAULT_SECRETS_CICD_PATH }}
+
