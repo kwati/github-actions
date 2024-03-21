@@ -75,6 +75,7 @@ runs:
           ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_HOST | SONARQUBE_HOST;
           ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_TOKEN | SONARQUBE_TOKEN;
           ${{ inputs.VAULT_SECRETS_PATH }} SNYK_TOKEN | SNYK_TOKEN;
+          ${{ inputs.PROJECT_SECRETS_PATH }} PROJECT_KEY | PROJECT_KEY;
   
     - name: Import Secrets
       if: ${{ inputs.VAULT_ENABLED == 'false' }}
@@ -92,7 +93,7 @@ runs:
       run: sonar-scanner
         -Dsonar.host.url=${{ env.SONARQUBE_HOST }}
         -Dsonar.login=${{ env.SONARQUBE_TOKEN }}
-        -Dsonar.projectKey=${{ inputs.PROJECT_NAME }}
+        -Dsonar.projectKey=${{ env.PROJECT_KEY }}
         -Dsonar.sources=${{ github.workspace }}
         -Dsonar.pullrequest.key=${{github.event.pull_request.number}}
         -Dsonar.pullrequest.branch=${{github.head_ref}}
