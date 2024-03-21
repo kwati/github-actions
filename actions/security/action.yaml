@@ -1,0 +1,176 @@
+name: Static Code Analysis
+description: Static Code Analysis with Sonarqube
+inputs:
+  PROJECT_NAME:
+    description: Project Name
+    required: true
+  VAULT_ENABLED:
+    description: Enable if VAULT is used for secrets
+    type: boolean
+    default: false
+  VAULT_SERVER:
+    description: VAULT Server
+    type: string
+  VAULT_SECRETS_PATH:
+    description: VAULT secrets path
+    type: string
+  VAULT_TOKEN:
+    description: VAULT Token
+    type: string
+  SNYK_TOKEN:
+    description: Snyk API Token
+    required: true
+    default:  ""
+  PYTHON_VERSION:
+    description: Python Version
+    required: true
+    default: "3.10"        
+  PYTHON_DEP_PATH:
+    description: Path for the Python Dependencies file
+    required: true
+    default: "./app/requirements.txt"    
+  PROJECT_APP_PATH:
+    description: Application Project Root Path
+    required: true
+    default: "./app"
+  EXTRA_ARGS:
+    description: Extra arguments of snyk cli
+  SONARQUBE_HOST:
+    description: Sonarqube Host
+    type: string
+  SONARQUBE_TOKEN:
+    description: Sonarqube Token
+    type: string
+  GITHUB_TOKEN:
+    description: Github Token
+    type: string
+  SONARQUBE_SCAN:
+    description: Enable Sonarqube Scan
+    type: boolean
+    default: true
+  TRUFFLEHOG_SCAN: 
+    description: Enable Trufflehog Scan
+    type: boolean
+    default: true
+  BANDIT_SCAN: 
+    description: Enable Bandit Scan
+    type: boolean
+    default: true
+  SNYK_SCAN: 
+    description: Enable Snyk Scan
+    type: boolean
+    default: true
+
+runs:
+  using: composite
+  steps:
+    - name: Import Secrets
+      if: ${{ inputs.VAULT_ENABLED == 'true' }}
+      uses: hashicorp/vault-action@v2.4.0
+      with:
+        url: https://${{ inputs.VAULT_SERVER }}
+        token: ${{ inputs.VAULT_TOKEN }}
+        tlsSkipVerify: true
+        secrets: |
+          ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_HOST | SONARQUBE_HOST;
+          ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_TOKEN | SONARQUBE_TOKEN;
+          ${{ inputs.VAULT_SECRETS_PATH }} SNYK_TOKEN | SNYK_TOKEN;
+  
+    - name: Import Secrets
+      if: ${{ inputs.VAULT_ENABLED == 'false' }}
+      run: |
+        echo "SONARQUBE_HOST=${{ inputs.SONARQUBE_HOST }}"  >> $GITHUB_ENV
+        echo "SONARQUBE_TOKEN=${{ inputs.SONARQUBE_TOKEN }}"  >> $GITHUB_ENV
+      shell: bash
+  
+    - name: Setup SonarQube
+      if: ${{ inputs.SONARQUBE_SCAN == 'true' }}
+      uses: warchant/setup-sonar-scanner@v7
+
+    - name: SonarQube Scan
+      if: ${{ inputs.SONARQUBE_SCAN == 'true' }}
+      run: sonar-scanner
+        -Dsonar.host.url=${{ env.SONARQUBE_HOST }}
+        -Dsonar.login=${{ env.SONARQUBE_TOKEN }}
+        -Dsonar.projectKey=${{ inputs.PROJECT_NAME }}
+        -Dsonar.sources=${{ github.workspace }}
+        -Dsonar.pullrequest.key=${{github.event.pull_request.number}}
+        -Dsonar.pullrequest.branch=${{github.head_ref}}
+        -Dsonar.pullrequest.base=${{github.base_ref}}
+      shell: bash
+
+    - name: SonarQube Quality Gate check
+      if: ${{ inputs.SONARQUBE_SCAN == 'true' }}
+      id: sonarqube-quality-gate-check
+      uses: sonarsource/sonarqube-quality-gate-action@master
+      env:
+       SONAR_TOKEN: ${{ env.SONARQUBE_TOKEN }}
+       SONAR_HOST_URL: ${{ env.SONARQUBE_HOST }}
+
+    - name: Scan Report
+      if: ${{ inputs.SONARQUBE_SCAN == 'true' }}
+      run: |
+        cat .scannerwork/report-task.txt
+      shell: bash
+
+    - name: Secret Scan
+      if: ${{ inputs.TRUFFLEHOG_SCAN == 'true' }}
+      id: trufflehog
+      uses: trufflesecurity/trufflehog@main
+      continue-on-error: true
+      with:
+        path: ${{ github.workspace }}
+        base: "${{ github.event.repository.default_branch }}"
+        head: HEAD
+        extra_args: --debug
+
+    - name: Setup Python
+      if: ${{ inputs.BANDIT_SCAN == 'true' and inputs.SNYK_SCAN == 'true' }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.PYTHON_VERSION }}
+        cache: "pip"
+        cache-dependency-path: ${{ inputs.PYTHON_DEP_PATH }}
+
+    - name: Install and scan with Bandit
+      if : ${{ inputs.BANDIT_SCAN == 'true' }}
+      run: | 
+        pip install bandit
+        python3 -m bandit -a file -r -ll -ii . -f csv -o report.csv --exit-zero
+        python3 -m bandit -a file -r -ll -ii . -f txt -o report.txt --exit-zero
+      shell: bash
+
+    - name: Format output for PR Bandit
+      if : ${{ inputs.BANDIT_SCAN == 'true' }}
+      run: |
+        pip install tabulate
+        python3 ${{ github.action_path }}/scripts/formater.py report.csv output.md
+      shell: bash
+    
+    - name: PR comment with file Bandit
+      if : ${{ inputs.BANDIT_SCAN == 'true' }}
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: ${{ github.workspace }}/output.md        
+        
+    #- name: Install requirements
+    #  run: |
+    #    pip install --upgrade pip
+    #    pip install -r ${{ inputs.PYTHON_DEP_PATH }}
+    #  shell: bash
+
+    - name: Run Snyk to check for vulnerabilities
+      if: ${{ inputs.SNYK_SCAN == 'true' }}
+      continue-on-error: true
+      run: |
+        wget -q https://static.snyk.io/cli/latest/snyk-linux && mv ./snyk-linux ./snyk && chmod +x ./snyk
+        ./snyk auth ${{ env.SNYK_TOKEN }}
+        ./snyk test --file=${{ github.workspace }}/app/requirements/base.txt --project-name=${{ inputs.PROJECT_NAME }} --package-manager=pip --sarif-file-output=snyk.sarif ${{ inputs.EXTRA_ARGS}}
+      working-directory: ${{ inputs.PROJECT_APP_PATH }}
+      shell: bash
+
+    #- name: Upload result to GitHub Code Scanning
+    #  uses: github/codeql-action/upload-sarif@v2
+    #  with:
+    #    sarif_file: ${{ inputs.PROJECT_APP_PATH }}/snyk.sarif
+

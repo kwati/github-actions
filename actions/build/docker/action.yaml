@@ -73,3 +73,4 @@ runs:
       docker push ${{ env.IMAGE_REPOSITORY }}/${{ github.repository }}-${{ inputs.ENVIRONMENT }}:latest
       echo "Pushed Docker Image ${{ env.IMAGE_REPOSITORY }}/${{ github.repository }}-${{ inputs.ENVIRONMENT }}:latest"
     shell: bash
+
