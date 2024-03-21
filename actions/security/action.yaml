@@ -75,6 +75,7 @@ runs:
           ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_HOST | SONARQUBE_HOST;
           ${{ inputs.VAULT_SECRETS_PATH }} SONARQUBE_TOKEN | SONARQUBE_TOKEN;
           ${{ inputs.VAULT_SECRETS_PATH }} SNYK_TOKEN | SNYK_TOKEN;
+          ${{ inputs.PROJECT_SECRETS_PATH }} PROJECT_KEY | PROJECT_KEY;
   
     - name: Import Secrets
       if: ${{ inputs.VAULT_ENABLED == 'false' }}
@@ -92,7 +93,7 @@ runs:
       run: sonar-scanner
         -Dsonar.host.url=${{ env.SONARQUBE_HOST }}
         -Dsonar.login=${{ env.SONARQUBE_TOKEN }}
-        -Dsonar.projectKey=${{ inputs.PROJECT_NAME }}
+        -Dsonar.projectKey=${{ env.PROJECT_KEY }}
         -Dsonar.sources=${{ github.workspace }}
         -Dsonar.pullrequest.key=${{github.event.pull_request.number}}
         -Dsonar.pullrequest.branch=${{github.head_ref}}
@@ -125,7 +126,7 @@ runs:
         extra_args: --debug
 
     - name: Setup Python
-      if: ${{ inputs.BANDIT_SCAN == 'true' and inputs.SNYK_SCAN == 'true' }}
+      if: ${{ inputs.BANDIT_SCAN == 'true' && inputs.SNYK_SCAN == 'true' }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ inputs.PYTHON_VERSION }}
@@ -153,11 +154,11 @@ runs:
       with:
         filePath: ${{ github.workspace }}/output.md        
         
-    #- name: Install requirements
-    #  run: |
-    #    pip install --upgrade pip
-    #    pip install -r ${{ inputs.PYTHON_DEP_PATH }}
-    #  shell: bash
+    - name: Install Project Dependencies for snyk
+      if: ${{ inputs.SNYK_SCAN == 'true' }}
+      run: |
+        pip install -r ${{ inputs.PYTHON_DEP_PATH }}
+      shell: bash
 
     - name: Run Snyk to check for vulnerabilities
       if: ${{ inputs.SNYK_SCAN == 'true' }}
