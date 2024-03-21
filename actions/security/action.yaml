@@ -153,11 +153,11 @@ runs:
       with:
         filePath: ${{ github.workspace }}/output.md        
         
-    #- name: Install requirements
-    #  run: |
-    #    pip install --upgrade pip
-    #    pip install -r ${{ inputs.PYTHON_DEP_PATH }}
-    #  shell: bash
+    - name: Install Project Dependencies for snyk
+      if: ${{ inputs.SNYK_SCAN == 'true' }}
+      run: |
+        pip install -r ${{ inputs.PYTHON_DEP_PATH }}
+      shell: bash
 
     - name: Run Snyk to check for vulnerabilities
       if: ${{ inputs.SNYK_SCAN == 'true' }}
