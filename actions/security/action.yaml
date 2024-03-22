@@ -1,8 +1,8 @@
 name: Static Code Analysis
 description: Static Code Analysis with Sonarqube
 inputs:
-  PROJECT_KEY:
-    description: Sonar Project Key
+  PROJECT_NAME:
+    description: Project Name
     required: true
   VAULT_ENABLED:
     description: Enable if VAULT is used for secrets
@@ -20,14 +20,10 @@ inputs:
   VAULT_TOKEN:
     description: VAULT Token
     type: string
-  SNYK_TOKEN:
-    description: Snyk API Token
-    required: true
-    default:  ""
   PYTHON_VERSION:
     description: Python Version
     required: true
-    default: "3.10"        
+    default: "3.10"       
   PYTHON_DEP_PATH:
     description: Path for the Python Dependencies file
     required: true
@@ -36,7 +32,7 @@ inputs:
     description: Application Project Root Path
     required: true
     default: "./app"
-  EXTRA_ARGS:
+  EXTRA_SNYK_ARGS:
     description: Extra arguments of snyk cli
   SONARQUBE_HOST:
     description: Sonarqube Host
