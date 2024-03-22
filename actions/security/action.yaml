@@ -1,8 +1,8 @@
 name: Static Code Analysis
 description: Static Code Analysis with Sonarqube
 inputs:
-  PROJECT_NAME:
-    description: Project Name
+  PROJECT_KEY:
+    description: Sonar Project Key
     required: true
   VAULT_ENABLED:
     description: Enable if VAULT is used for secrets
@@ -137,22 +137,37 @@ runs:
       if : ${{ inputs.BANDIT_SCAN == 'true' }}
       run: | 
         pip install bandit
-        python3 -m bandit -a file -r -ll -ii . -f csv -o report.csv --exit-zero
-        python3 -m bandit -a file -r -ll -ii . -f txt -o report.txt --exit-zero
+        python3 -m bandit -a file -r -l -i . -f csv -o report.csv --exit-zero
       shell: bash
 
+    - name: Check number of lines in report.csv
+      id: count-lines
+      run: |
+        lines=$(wc -l < report.csv)
+        echo "::set-output name=lines::$lines"
+      shell: bash    
+
     - name: Format output for PR Bandit
-      if : ${{ inputs.BANDIT_SCAN == 'true' }}
+      if: ${{ github.ref != 'refs/heads/develop' && inputs.BANDIT_SCAN == 'true' }}
       run: |
         pip install tabulate
         python3 ${{ github.action_path }}/scripts/formater.py report.csv output.md
       shell: bash
-    
-    - name: PR comment with file Bandit
-      if : ${{ inputs.BANDIT_SCAN == 'true' }}
+
+    - name: Comment based on Bandit report
+      if: ${{ steps.count-lines.outputs.lines == '1' && github.ref != 'refs/heads/develop' && inputs.BANDIT_SCAN == 'true' }}
       uses: thollander/actions-comment-pull-request@v2
       with:
-        filePath: ${{ github.workspace }}/output.md        
+        message: |
+          No vulnerabilities Found :hooray:
+        reactions: hooray, rocket
+    
+    - name: PR comment with file Bandit
+      if: ${{ steps.count-lines.outputs.lines != '1' && github.ref != 'refs/heads/develop' && inputs.BANDIT_SCAN == 'true' }}
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: ${{ github.workspace }}/output.md 
+        reactions: eyes    
         
     - name: Install Project Dependencies for snyk
       if: ${{ inputs.SNYK_SCAN == 'true' }}
@@ -162,7 +177,6 @@ runs:
 
     - name: Run Snyk to check for vulnerabilities
       if: ${{ inputs.SNYK_SCAN == 'true' }}
-      continue-on-error: true
       run: |
         wget -q https://static.snyk.io/cli/latest/snyk-linux && mv ./snyk-linux ./snyk && chmod +x ./snyk
         ./snyk auth ${{ env.SNYK_TOKEN }}
@@ -174,4 +188,3 @@ runs:
     #  uses: github/codeql-action/upload-sarif@v2
     #  with:
     #    sarif_file: ${{ inputs.PROJECT_APP_PATH }}/snyk.sarif
-
