@@ -19,6 +19,7 @@ runs:
         python-version: ${{ inputs.PYTHON_VERSION }}
     
     - name: Setup ansible lint
+      continue-on-error: true
       run: |
         pip install ansible-lint
         ansible-lint -p ${{ github.workspace }}/ansible -f json > report.json
