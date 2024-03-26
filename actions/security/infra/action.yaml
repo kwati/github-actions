@@ -1,0 +1,39 @@
+name: Infra Repo Code Analysis
+description: Static Code Analysis
+inputs:
+  PYTHON_VERSION:
+    description: Python Version
+    default: '3.11'
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.PYTHON_VERSION }}
+    
+    - name: Setup ansible lint
+      run: |
+        pip install ansible-lint
+        python3 -m ansible-lint -p ${{ github.workspace }}/ansible -f json
+      shell: bash
+    
+    - name: Format output for PR
+      run: |
+        pip install argparge
+        python3 ${{ github.action_path }}/scripts/formater.py report.json output.md
+      shell: bash
+
+    - name: PR comment with file Bandit
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: ${{ github.workspace }}/output.md 
+        reactions: eyes
+
+    
