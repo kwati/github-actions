@@ -21,7 +21,7 @@ runs:
     - name: Setup ansible lint
       run: |
         pip install ansible-lint
-        python3 -m ansible-lint -p ${{ github.workspace }}/ansible -f json
+        ansible-lint -p ${{ github.workspace }}/ansible -f json > report.json
       shell: bash
     
     - name: Format output for PR
