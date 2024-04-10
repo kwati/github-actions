@@ -1,5 +1,5 @@
 x-django-image: &image 
-  ${IMAGE_REPOSITORY}/kwati/${PROJECT_NAME}-${ENVIRONMENT}:latest
+  ${IMAGE_REPOSITORY}/${GITHUB_REPOSITORY}-${ENVIRONMENT}:latest
 
 x-django-environment: &environment
     SETTINGS_DB_HOST: ${SETTINGS_DB_HOST}
