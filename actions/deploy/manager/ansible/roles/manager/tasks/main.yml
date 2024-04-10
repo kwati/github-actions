@@ -6,3 +6,4 @@
   vars:
     PWD: "{{ lookup('env', 'PWD') }}"
     MODULE: "{{ lookup('env', 'DJANGO_MODULE') }}"
+    DIR: "{{ lookup('env', 'WORK_DIR')}}"
