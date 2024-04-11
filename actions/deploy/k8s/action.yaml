@@ -117,7 +117,8 @@ runs:
     shell: bash
 
   - name: Check Cluster Health
-    run: |      
+    run: |
+      export KUBECONFIG=kubeconfig.yaml      
       echo "Check Cluster Status"
       kubectl get --raw='/readyz?verbose'
       kubectl get --raw='/readyz?verbose' | grep "readyz check passed"
@@ -155,6 +156,7 @@ runs:
   - name: Create KCR secret
     if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
     run: |
+      export KUBECONFIG=kubeconfig.yaml
       if kubectl get secret kcr-secret --namespace=${{ env.NAMESPACE }} &> /dev/null; then
         echo "Creating kcr-secrets from variables..."
         kubectl delete secret kcr-secret --namespace=${{ env.NAMESPACE }}
@@ -176,6 +178,7 @@ runs:
   - name: Create ECR Regsitry secret
     if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
     run: |
+      export KUBECONFIG=kubeconfig.yaml
       AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
       kubectl create secret docker-registry kcr-secret \
         --docker-server=${AWS_ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION_EKS }}.amazonaws.com \
