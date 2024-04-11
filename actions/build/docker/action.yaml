@@ -47,7 +47,7 @@ runs:
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} IMAGE_REPOSITORY_TYPE | IMAGE_REPOSITORY_TYPE;
   
   - name: Create project and policies in registry
-    if: ${{ env.IMAGE_REPOSITORY_TYPE = 'harbor' }}
+    if: ${{ env.IMAGE_REPOSITORY_TYPE == 'harbor' }}
     run: |
       ${{ github.action_path }}/scripts/config.sh
     shell: bash
