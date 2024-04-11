@@ -89,7 +89,7 @@ runs:
     shell: bash
   
   - name: Pull KUBECONFIG
-    if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
+    if: ${{ env.K8S_CLUSTER_INFRA = 'EKS' }}
     run: |
       #rm -rf /root/.kube/config.yaml
       aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.CLUSTER_NAME }}

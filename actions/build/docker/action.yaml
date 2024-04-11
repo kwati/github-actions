@@ -44,10 +44,10 @@ runs:
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} KCR_USER | KCR_USER;        
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} KCR_PASSWORD | KCR_PASSWORD;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} IMAGE_REPOSITORY | IMAGE_REPOSITORY;
-        ${{ inputs.VAULT_SECRETS_CICD_PATH }} K8S_CLUSTER_INFRA | K8S_CLUSTER_INFRA;
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} IMAGE_REPOSITORY_TYPE | IMAGE_REPOSITORY_TYPE;
   
   - name: Create project and policies in registry
-    if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
+    if: ${{ env.IMAGE_REPOSITORY_TYPE = 'harbor' }}
     run: |
       ${{ github.action_path }}/scripts/config.sh
     shell: bash
