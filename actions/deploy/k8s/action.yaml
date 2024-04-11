@@ -130,7 +130,7 @@ runs:
 
   - name: Create Namespace
     run: |
-      export KUBECONFIG=/root/.kube/config.yaml
+      export KUBECONFIG=kubeconfig.yaml
       if ! kubectl get namespace '${{ env.NAMESPACE }}' &> /dev/null; then
         echo "Creating namespace ${{ env.NAMESPACE }}"
         kubectl create namespace "${{ env.NAMESPACE }}"
