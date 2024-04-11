@@ -122,7 +122,7 @@ runs:
       echo "Check Cluster Status"
       kubectl get --raw='/readyz?verbose'
       kubectl get --raw='/readyz?verbose' | grep "readyz check passed"
-      if test \$? -eq 0; then
+      if test $? -eq 0; then
           echo "Kubernetes cluster is Healthy...Continuing the pipeline"
       else
           echo "Kubernetes cluster is Not Healthy . Exiting Pipeline..."
