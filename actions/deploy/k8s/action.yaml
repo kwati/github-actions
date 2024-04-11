@@ -65,7 +65,7 @@ runs:
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} IMAGE_REPOSITORY | IMAGE_REPOSITORY;
   
   - name: Import Secrets From Vault for EKS
-    if: ${{ env.K8S_CLUSTER_INFRA = 'EKS' }}
+    if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
     uses: hashicorp/vault-action@v2
     with:
       url: https://${{ inputs.VAULT_SERVER }}/
@@ -76,7 +76,6 @@ runs:
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} AWS_REGION_EKS | AWS_REGION_EKS;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} AWS_ACCESS_KEY_ID_EKS | AWS_ACCESS_KEY_ID_EKS;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} AWS_SECRET_ACCESS_KEY_EKS | AWS_SECRET_ACCESS_KEY_EKS;
-        ${{ inputs.VAULT_SECRETS_CICD_PATH }} IMAGE_REPOSITORY | IMAGE_REPOSITORY;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} K8S_CLUSTER_INFRA | K8S_CLUSTER_INFRA;
 
   - name: Install SSH Key
@@ -101,7 +100,7 @@ runs:
     shell: bash
   
   - name: 'Configure AWS creds'
-    if: ${{ env.K8S_CLUSTER_INFRA = 'EKS' }}
+    if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
     uses: aws-actions/configure-aws-credentials@v1
     with:
       aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID_EKS }}
@@ -109,7 +108,7 @@ runs:
       aws-region: ${{env.AWS_REGION_EKS}}
 
   - name: Extract Kubeconfig file
-    if: ${{ env.K8S_CLUSTER_INFRA = 'EKS' }}
+    if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
     run: |
       rm -rf /root/.kube/config.yaml
       aws eks update-kubeconfig --region ${{ env.AWS_REGION_EKS }} --name ${{ env.EKS_CLUSTER_NAME }}
@@ -133,7 +132,7 @@ runs:
     run: |
       export KUBECONFIG=/root/.kube/config.yaml
       if ! kubectl get namespace '${{ env.NAMESPACE }}' &> /dev/null; then
-        
+        echo "Creating namespace ${{ env.NAMESPACE }}"
         kubectl create namespace "${{ env.NAMESPACE }}"
       else
         echo "Namespace ${{ env.NAMESPACE }} already exists."
@@ -155,27 +154,46 @@ runs:
   - name: Create KCR secret
     if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
     run: |
-      if kubectl get secret kcr-secret --namespace=${NAMESPACE} &> /dev/null; then
+      if kubectl get secret kcr-secret --namespace=${{ env.NAMESPACE }} &> /dev/null; then
         echo "Creating kcr-secrets from variables..."
-        kubectl delete secret kcr-secret --namespace=${NAMESPACE}
-        kubectl create secret docker-registry kcr-secret --namespace=${NAMESPACE} --docker-server=${IMAGE_REPOSITORY} --docker-username=${KCR_USER} --docker-password=${KCR_PASSWORD}
+        kubectl delete secret kcr-secret --namespace=${{ env.NAMESPACE }}
+        kubectl create secret docker-registry kcr-secret --namespace=${{ env.NAMESPACE }} --docker-server=${{ env.IMAGE_REPOSITORY }} --docker-username=${{ env.KCR_USER }} --docker-password=${{ env.KCR_PASSWORD }}
       else
         echo "Creating kcr-secrets from variables..."
-        kubectl create secret docker-registry kcr-secret --namespace=${NAMESPACE} --docker-server=${IMAGE_REPOSITORY} --docker-username=${KCR_USER} --docker-password=${KCR_PASSWORD}
+        kubectl create secret docker-registry kcr-secret --namespace=${{ env.NAMESPACE }} --docker-server=${{ env.IMAGE_REPOSITORY }} --docker-username=${{ env.KCR_USER }} --docker-password=${{ env.KCR_PASSWORD }}
       fi
     shell: bash
 
   - name: Create KCR secret
-    if: ${{ env.K8S_CLUSTER_INFRA = 'EKS' }}
+    if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
     run: |
-      if kubectl get secret kcr-secret --namespace=${NAMESPACE} &> /dev/null; then
+      if kubectl get secret kcr-secret --namespace=${{ env.NAMESPACE }} &> /dev/null; then
         echo "Creating kcr-secrets from variables..."
-        kubectl delete secret kcr-secret --namespace=${NAMESPACE}
-        kubectl create secret docker-registry kcr-secret --namespace=${NAMESPACE} --docker-server=${IMAGE_REPOSITORY} --docker-username=${KCR_USER} --docker-password=${KCR_PASSWORD}
+        kubectl delete secret kcr-secret --namespace=${{ env.NAMESPACE }}
+        kubectl create secret docker-registry kcr-secret --namespace=${{ env.NAMESPACE }} --docker-server=${{ env.IMAGE_REPOSITORY }} --docker-username=${{ env.KCR_USER }} --docker-password=${{ env.KCR_PASSWORD }}
       else
         echo "Creating kcr-secrets from variables..."
-        kubectl create secret docker-registry kcr-secret --namespace=${NAMESPACE} --docker-server=${IMAGE_REPOSITORY} --docker-username=${KCR_USER} --docker-password=${KCR_PASSWORD}
+        kubectl create secret docker-registry kcr-secret --namespace=${{ env.NAMESPACE }} --docker-server=${{ env.IMAGE_REPOSITORY }} --docker-username=${{ env.KCR_USER }} --docker-password=${{ env.KCR_PASSWORD }}
       fi
+    shell: bash
+
+  - name: Configure AWS creds
+    if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
+    uses: aws-actions/configure-aws-credentials@v1
+    with:
+      aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID_ECR }}
+      aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY_ECR }}
+      aws-region: ${{env.AWS_REGION_EKS}}
+
+  - name: Create ECR Regsitry secret
+    if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
+    run: |
+      AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+      kubectl create secret docker-registry kcr-secret \
+        --docker-server=${AWS_ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION_EKS }}.amazonaws.com \
+        --docker-username=AWS \
+        --docker-password=$(aws ecr get-login-password --region ${{ env.AWS_REGION_EKS }}) \
+        --namespace=${{ env.NAMESPACE }}
     shell: bash
   
   - name: Login to ECR

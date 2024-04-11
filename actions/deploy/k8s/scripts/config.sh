@@ -36,11 +36,17 @@ fi
 
 function configmap() {
   LOCAL_SETTINGS_NAME=$1
-  if kubectl get configmaps app-local-settings --namespace=${NAMESPACE} &> /dev/null; then
-    kubectl delete configmap app-local-settings --namespace=${NAMESPACE}
-    kubectl create configmap app-local-settings --from-file=${LOCAL_SETTINGS_NAME} --namespace=${NAMESPACE}
+  if [ -f ${LOCAL_SETTINGS_NAME} ]; then
+    echo "${LOCAL_SETTINGS_NAME} exists.. Continuing creating configmap"
+    if kubectl get configmaps app-local-settings --namespace=${NAMESPACE} &> /dev/null; then
+      kubectl delete configmap app-local-settings --namespace=${NAMESPACE}
+      kubectl create configmap app-local-settings --from-file=${LOCAL_SETTINGS_NAME} --namespace=${NAMESPACE}
+    else
+      kubectl create configmap app-local-settings --from-file=${LOCAL_SETTINGS_NAME} --namespace=${NAMESPACE}
+    fi
   else
-    kubectl create configmap app-local-settings --from-file=${LOCAL_SETTINGS_NAME} --namespace=${NAMESPACE}
+    echo "File ${LOCAL_SETTINGS_NAME} does not exist."
+    exit 1
   fi
 }
 
@@ -71,13 +77,18 @@ if [ "${ECR_REPOSITORY}" == "python-django" ]; then
     curl -H "X-Vault-Token: ${VAULT_TOKEN}" "https://${VAULT_SERVER}/v1/${VAULT_SECRET_COMMON_PATH}" | jq -r .data > .common.env.json
     cat .env.json | jq -r 'to_entries[] | "\(.key)=\(.value)"' | base64 > secrets
     cat .common.env.json | jq -r 'to_entries[] | "\(.key)=\(.value)"' | base64 >> secrets
-    if kubectl get secret app-secret --namespace=${NAMESPACE} &> /dev/null; then
-      echo "Creating secrets from variables..."
-      kubectl delete secret app-secret --namespace=${NAMESPACE}
-      kubectl create secret generic app-secret --from-file=secrets --namespace=${NAMESPACE}
+    if [ -f "secrets" ]; then
+      if kubectl get secret app-secret --namespace=${NAMESPACE} &> /dev/null; then
+        echo "Creating secrets from variables..."
+        kubectl delete secret app-secret --namespace=${NAMESPACE}
+        kubectl create secret generic app-secret --from-file=secrets --namespace=${NAMESPACE}
+      else
+        echo "Creating secrets from variables..."
+        kubectl create secret generic app-secret --from-file=secrets --namespace=${NAMESPACE}
+      fi
     else
-      echo "Creating secrets from variables..."
-      kubectl create secret generic app-secret --from-file=secrets --namespace=${NAMESPACE}
+      echo "Secrets file does not exist."
+      exit 1
     fi
   else
     echo "Vault Status is ${VAULT_STATUS}"
