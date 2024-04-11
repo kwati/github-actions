@@ -21,7 +21,18 @@ KCR_PASSWORD=$KCR_PASSWORD
 IMAGE_REPOSITORY=$IMAGE_REPOSITORY
 ECR_REPOSITORY=$ECR_REPOSITORY
 
+
 export KUBECONFIG=kubeconfig.yaml
+
+echo "Check Cluster Status"
+kubectl get --raw='/readyz?verbose'
+kubectl get --raw='/readyz?verbose' | grep "readyz check passed"
+if test \$? -eq 0; then
+    echo "Kubernetes cluster is Healthy...Continuing the pipeline"
+else
+    echo "Kubernetes cluster is Not Healthy . Exiting Pipeline..."
+    exit 1
+fi
 
 function configmap() {
   LOCAL_SETTINGS_NAME=$1
@@ -74,14 +85,4 @@ if [ "${ECR_REPOSITORY}" == "python-django" ]; then
   fi
 else
    echo "Skipping Secrets"
-fi
-
-
-if kubectl get secret kcr-secret --namespace=${NAMESPACE} &> /dev/null; then
-  echo "Creating kcr-secrets from variables..."
-  kubectl delete secret kcr-secret --namespace=${NAMESPACE}
-  kubectl create secret docker-registry kcr-secret --namespace=${NAMESPACE} --docker-server=${IMAGE_REPOSITORY} --docker-username=${KCR_USER} --docker-password=${KCR_PASSWORD}
-else
-  echo "Creating kcr-secrets from variables..."
-  kubectl create secret docker-registry kcr-secret --namespace=${NAMESPACE} --docker-server=${IMAGE_REPOSITORY} --docker-username=${KCR_USER} --docker-password=${KCR_PASSWORD}
 fi
