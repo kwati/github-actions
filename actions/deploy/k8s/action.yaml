@@ -167,23 +167,26 @@ runs:
       fi
     shell: bash
 
-  - name: Configure AWS creds
-    if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
-    uses: aws-actions/configure-aws-credentials@v1
-    with:
-      aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID_ECR }}
-      aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY_ECR }}
-      aws-region: ${{env.AWS_REGION_EKS}}
+  #- name: Configure AWS creds
+  #  if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
+  #  uses: aws-actions/configure-aws-credentials@v1
+  #  with:
+  #    aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID_ECR }}
+  #    aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY_ECR }}
+  #    aws-region: ${{env.AWS_REGION_EKS}}
 
   - name: Create ECR Regsitry secret
     if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
     run: |
       export KUBECONFIG=kubeconfig.yaml
-      AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+      aws configure set aws_access_key_id ${{ env.AWS_ACCESS_KEY_ID_ECR }} --profile aws-ecr
+      aws configure set aws_secret_access_key ${{ env.AWS_SECRET_ACCESS_KEY_ECR }} --profile aws-ecr
+      aws configure set default.region ${{ env.AWS_REGION_EKS }}
+      AWS_ACCOUNT_ID=$(aws --profile aws-ecr sts get-caller-identity --query "Account" --output text)
       kubectl create secret docker-registry kcr-secret \
         --docker-server=${AWS_ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION_EKS }}.amazonaws.com \
         --docker-username=AWS \
-        --docker-password=$(aws ecr get-login-password --region ${{ env.AWS_REGION_EKS }}) \
+        --docker-password=$(aws --profile aws-ecr ecr get-login-password --region ${{ env.AWS_REGION_EKS }}) \
         --namespace=${{ env.NAMESPACE }}
     shell: bash
   
