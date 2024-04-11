@@ -111,9 +111,9 @@ runs:
   - name: Extract Kubeconfig file
     if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
     run: |
-      rm -f ~/.kube/config.yaml
-      aws eks update-kubeconfig --region ${{ env.AWS_REGION_EKS }} --name ${{ env.EKS_CLUSTER_NAME }}
-      cp ~/.kube/config.yaml ${{ github.workspace }}/kubeconfig.yaml
+      touch ${{ github.workspace }}/kubeconfig.yaml
+      aws eks update-kubeconfig --region ${{ env.AWS_REGION_EKS }} --name ${{ env.EKS_CLUSTER_NAME }} --kubeconfig ${{ github.workspace }}/kubeconfig.yaml
+      chmod 644 ${{ github.workspace }}/kubeconfig.yaml
     shell: bash
 
   - name: Check Cluster Health
