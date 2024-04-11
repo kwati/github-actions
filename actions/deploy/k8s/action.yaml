@@ -165,19 +165,6 @@ runs:
       fi
     shell: bash
 
-  - name: Create KCR secret
-    if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
-    run: |
-      if kubectl get secret kcr-secret --namespace=${{ env.NAMESPACE }} &> /dev/null; then
-        echo "Creating kcr-secrets from variables..."
-        kubectl delete secret kcr-secret --namespace=${{ env.NAMESPACE }}
-        kubectl create secret docker-registry kcr-secret --namespace=${{ env.NAMESPACE }} --docker-server=${{ env.IMAGE_REPOSITORY }} --docker-username=${{ env.KCR_USER }} --docker-password=${{ env.KCR_PASSWORD }}
-      else
-        echo "Creating kcr-secrets from variables..."
-        kubectl create secret docker-registry kcr-secret --namespace=${{ env.NAMESPACE }} --docker-server=${{ env.IMAGE_REPOSITORY }} --docker-username=${{ env.KCR_USER }} --docker-password=${{ env.KCR_PASSWORD }}
-      fi
-    shell: bash
-
   - name: Configure AWS creds
     if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
     uses: aws-actions/configure-aws-credentials@v1
