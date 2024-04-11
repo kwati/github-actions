@@ -24,16 +24,6 @@ ECR_REPOSITORY=$ECR_REPOSITORY
 
 export KUBECONFIG=kubeconfig.yaml
 
-echo "Check Cluster Status"
-kubectl get --raw='/readyz?verbose'
-kubectl get --raw='/readyz?verbose' | grep "readyz check passed"
-if test \$? -eq 0; then
-    echo "Kubernetes cluster is Healthy...Continuing the pipeline"
-else
-    echo "Kubernetes cluster is Not Healthy . Exiting Pipeline..."
-    exit 1
-fi
-
 function configmap() {
   LOCAL_SETTINGS_NAME=$1
   if [ -f ${LOCAL_SETTINGS_NAME} ]; then
