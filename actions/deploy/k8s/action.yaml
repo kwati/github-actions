@@ -183,11 +183,22 @@ runs:
       aws configure set aws_secret_access_key ${{ env.AWS_SECRET_ACCESS_KEY_ECR }} --profile aws-ecr
       aws configure set default.region ${{ env.AWS_REGION_EKS }}
       AWS_ACCOUNT_ID=$(aws --profile aws-ecr sts get-caller-identity --query "Account" --output text)
-      kubectl create secret docker-registry kcr-secret \
-        --docker-server=${AWS_ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION_EKS }}.amazonaws.com \
-        --docker-username=AWS \
-        --docker-password=$(aws --profile aws-ecr ecr get-login-password --region ${{ env.AWS_REGION_EKS }}) \
-        --namespace=${{ env.NAMESPACE }}
+      if kubectl get secret kcr-secret --namespace=${{ env.NAMESPACE }} &> /dev/null; then
+        echo "Deleting existing kcr-secrets and creating new one..."
+        kubectl delete secret kcr-secret --namespace=${{ env.NAMESPACE }}
+        kubectl create secret docker-registry kcr-secret \
+          --docker-server=${AWS_ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION_EKS }}.amazonaws.com \
+          --docker-username=AWS \
+          --docker-password=$(aws --profile aws-ecr ecr get-login-password --region ${{ env.AWS_REGION_EKS }}) \
+          --namespace=${{ env.NAMESPACE }}
+      else
+        echo "Creating kcr-secrets"
+        kubectl create secret docker-registry kcr-secret \
+          --docker-server=${AWS_ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION_EKS }}.amazonaws.com \
+          --docker-username=AWS \
+          --docker-password=$(aws --profile aws-ecr ecr get-login-password --region ${{ env.AWS_REGION_EKS }}) \
+          --namespace=${{ env.NAMESPACE }}
+      fi
     shell: bash
   
   - name: Login to ECR
