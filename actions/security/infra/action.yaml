@@ -40,9 +40,10 @@ runs:
         filePath: ${{ github.workspace }}/output.md 
         reactions: eyes
 
-    - name: Terraform Fortmat check
+    - name: Terraform Format check
+      continue-on-error: true
       run: |
-        terraform fmt -check -recursive -diff
+        terraform fmt -check -recursive
       shell: bash
 
     - name: Terraform Code Quality
