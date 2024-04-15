@@ -13,28 +13,46 @@ runs:
       with:
         fetch-depth: 0
     
-    - name: Setup Python
+    - name: Setup Environment
       uses: actions/setup-python@v2
       with:
         python-version: ${{ inputs.PYTHON_VERSION }}
-    
-    - name: Setup ansible lint
+
+    - name: Install Dependencies
+      run: |
+        pip install ansible-lint argparge checkov
+      shell: bash
+
+    - name: Lint ansible playbooks
       continue-on-error: true
       run: |
-        pip install ansible-lint
         ansible-lint -p ${{ github.workspace }}/ansible -f json > report.json
       shell: bash
     
     - name: Format output for PR
       run: |
-        pip install argparge
         python3 ${{ github.action_path }}/scripts/formater.py report.json output.md
       shell: bash
 
-    - name: PR comment with file Bandit
+    - name: PR comment with file ansible
       uses: thollander/actions-comment-pull-request@v2
       with:
         filePath: ${{ github.workspace }}/output.md 
         reactions: eyes
 
+    - name: Terraform Fortmat check
+      run: |
+        terraform fmt -check -recursive -diff
+      shell: bash
+
+    - name: Terraform Code Quality
+      run: |
+        checkov --directory ${{ github.workspace }}/terraform/ --quiet --output github_failed_only > quality
+      shell: bash
+
+    - name: PR comment with Terraform Quality check file
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: ${{ github.workspace }}/quality
+        reactions: eyes
     
