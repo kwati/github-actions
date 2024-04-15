@@ -26,7 +26,7 @@ runs:
     - name: Lint ansible playbooks
       continue-on-error: true
       run: |
-        ansible-lint -p ${{ github.workspace }}/ansible -f json > report.json
+        ANSIBLE_ROLES_PATH=${{ github.workspace }}/ansible/roles ansible-lint -p ${{ github.workspace }}/ansible -f json > report.json
       shell: bash
     
     - name: Format output for PR
