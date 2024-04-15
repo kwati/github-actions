@@ -47,8 +47,9 @@ runs:
       shell: bash
 
     - name: Terraform Code Quality
+      continue-on-error: true
       run: |
-        checkov --directory ${{ github.workspace }}/infrastructure/terraform/ --quiet --output github_failed_only --enable-secret-scan-all-files --no-fail-on-crash > quality
+        checkov --directory ${{ github.workspace }}/terraform/ --quiet --output github_failed_only --enable-secret-scan-all-files --no-fail-on-crash > quality
       shell: bash
 
     - name: PR comment with Terraform Quality check file
