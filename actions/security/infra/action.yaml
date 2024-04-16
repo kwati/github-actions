@@ -1,0 +1,60 @@
+name: Infra Repo Code Analysis
+description: Static Code Analysis
+inputs:
+  PYTHON_VERSION:
+    description: Python Version
+    default: '3.11'
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Environment
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.PYTHON_VERSION }}
+
+    - name: Install Dependencies
+      run: |
+        pip install ansible-lint argparge checkov
+      shell: bash
+
+    - name: Lint ansible playbooks
+      continue-on-error: true
+      run: |
+        ANSIBLE_ROLES_PATH=${{ github.workspace }}/infrastructure/ansible/roles ansible-lint -p ${{ github.workspace }}/ansible -f json > report.json
+      shell: bash
+    
+    - name: Format output for PR
+      run: |
+        python3 ${{ github.action_path }}/scripts/formater.py report.json output.md
+      shell: bash
+
+    - name: PR comment with file ansible
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: ${{ github.workspace }}/output.md 
+        reactions: eyes
+
+    - name: Terraform Format check
+      continue-on-error: true
+      run: |
+        terraform fmt -check -recursive
+      shell: bash
+
+    - name: Terraform Code Quality
+      continue-on-error: true
+      run: |
+        checkov --directory ${{ github.workspace }}/terraform/ --quiet --output github_failed_only --enable-secret-scan-all-files --no-fail-on-crash > quality
+      shell: bash
+
+    - name: PR comment with Terraform Quality check file
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: ${{ github.workspace }}/quality
+        reactions: eyes
+    
