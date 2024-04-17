@@ -20,6 +20,7 @@ KCR_USER=$KCR_USER
 KCR_PASSWORD=$KCR_PASSWORD
 IMAGE_REPOSITORY=$IMAGE_REPOSITORY
 ECR_REPOSITORY=$ECR_REPOSITORY
+AUTOSCALER=$AUTOSCALER
 
 export KUBECONFIG=kubeconfig.yaml
 
@@ -84,4 +85,15 @@ if kubectl get secret kcr-secret --namespace=${NAMESPACE} &> /dev/null; then
 else
   echo "Creating kcr-secrets from variables..."
   kubectl create secret docker-registry kcr-secret --namespace=${NAMESPACE} --docker-server=${IMAGE_REPOSITORY} --docker-username=${KCR_USER} --docker-password=${KCR_PASSWORD}
+fi
+
+if [ "${AUTOSCALER}" == "true" ]; then 
+  if kubectl get secret rabbitmq-secret --namespace=${NAMESPACE} &> /dev/null; then
+    echo "Creating rabbitmq-secret from variables..."
+    kubectl delete secret rabbitmq-secret --namespace=${NAMESPACE}
+    kubectl create secret generic --namespace=${NAMESPACE} rabbitmq-secret --from-literal=host=amqp://${SETTINGS_RABBITMQ_USER}:${SETTINGS_RABBITMQ_PASSWORD}@${SETTINGS_RABBITMQ_HOST1}:5672/${SETTINGS_RABBITMQ_USER}
+  else
+    echo "Creating rabbitmq-secret from variables..."
+    kubectl create secret generic --namespace=${NAMESPACE} rabbitmq-secret --from-literal=host=amqp://${SETTINGS_RABBITMQ_USER}:${SETTINGS_RABBITMQ_PASSWORD}@${SETTINGS_RABBITMQ_HOST1}:5672/${SETTINGS_RABBITMQ_USER} 
+  fi
 fi
