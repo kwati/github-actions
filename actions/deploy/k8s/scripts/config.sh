@@ -89,16 +89,6 @@ else
    echo "Skipping Secrets"
 fi
 
-
-if kubectl get secret kcr-secret --namespace=${NAMESPACE} &> /dev/null; then
-  echo "Creating kcr-secrets from variables..."
-  kubectl delete secret kcr-secret --namespace=${NAMESPACE}
-  kubectl create secret docker-registry kcr-secret --namespace=${NAMESPACE} --docker-server=${IMAGE_REPOSITORY} --docker-username=${KCR_USER} --docker-password=${KCR_PASSWORD}
-else
-  echo "Creating kcr-secrets from variables..."
-  kubectl create secret docker-registry kcr-secret --namespace=${NAMESPACE} --docker-server=${IMAGE_REPOSITORY} --docker-username=${KCR_USER} --docker-password=${KCR_PASSWORD}
-fi
-
 if [ "${AUTOSCALER}" == "true" ]; then 
   if kubectl get secret rabbitmq-secret --namespace=${NAMESPACE} &> /dev/null; then
     echo "Creating rabbitmq-secret from variables..."
