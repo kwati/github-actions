@@ -64,8 +64,24 @@ runs:
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} KCR_USER | KCR_USER;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} KCR_PASSWORD | KCR_PASSWORD;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} IMAGE_REPOSITORY | IMAGE_REPOSITORY;
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} K8S_CLUSTER_INFRA | K8S_CLUSTER_INFRA;
   
+  - name: Import Secrets From Vault for EKS
+    if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
+    uses: hashicorp/vault-action@v2
+    with:
+      url: https://${{ inputs.VAULT_SERVER }}/
+      token: ${{ inputs.VAULT_TOKEN }}
+      tlsSkipVerify: true
+      secrets: |
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} EKS_CLUSTER_NAME | EKS_CLUSTER_NAME;
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} AWS_REGION_EKS | AWS_REGION_EKS;
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} AWS_ACCESS_KEY_ID_EKS | AWS_ACCESS_KEY_ID_EKS;
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} AWS_SECRET_ACCESS_KEY_EKS | AWS_SECRET_ACCESS_KEY_EKS;
+        ${{ inputs.VAULT_SECRETS_CICD_PATH }} K8S_CLUSTER_INFRA | K8S_CLUSTER_INFRA;
+
   - name: Install SSH Key
+    if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
     uses: shimataro/ssh-key-action@v2
     with:
       key: ${{ env.SSH_KEY }}
@@ -73,20 +89,53 @@ runs:
       if_key_exists: replace
   
   - name: Add Known Hosts
+    if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
     run: |
       ssh-keyscan -H ${{ env.MASTER_IP }} >> ~/.ssh/known_hosts
     shell: bash
 
   - name: Extract Kubeconfig file
+    if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
     run: |
       scp root@${{ env.MASTER_IP }}:/etc/rancher/rke2/rke2.yaml kubeconfig.yaml
       sed -i "s|https://127.0.0.1:6443|https://${{ env.MASTER_IP }}:6443|g" kubeconfig.yaml
     shell: bash
   
+  - name: 'Configure AWS creds'
+    if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
+    uses: aws-actions/configure-aws-credentials@v1
+    with:
+      aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID_EKS }}
+      aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY_EKS }}
+      aws-region: ${{env.AWS_REGION_EKS}}
+
+  - name: Extract Kubeconfig file
+    if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
+    run: |
+      touch ${{ github.workspace }}/kubeconfig.yaml
+      aws eks update-kubeconfig --region ${{ env.AWS_REGION_EKS }} --name ${{ env.EKS_CLUSTER_NAME }} --kubeconfig ${{ github.workspace }}/kubeconfig.yaml
+      chmod 644 ${{ github.workspace }}/kubeconfig.yaml
+    shell: bash
+
+  - name: Check Cluster Health
+    run: |
+      export KUBECONFIG=kubeconfig.yaml      
+      echo "Check Cluster Status"
+      kubectl get --raw='/readyz?verbose'
+      kubectl get --raw='/readyz?verbose' | grep "readyz check passed"
+      if test $? -eq 0; then
+          echo "Kubernetes cluster is Healthy...Continuing the pipeline"
+      else
+          echo "Kubernetes cluster is Not Healthy . Exiting Pipeline..."
+          exit 1
+      fi
+    shell: bash
+
   - name: Create Namespace
     run: |
       export KUBECONFIG=kubeconfig.yaml
       if ! kubectl get namespace '${{ env.NAMESPACE }}' &> /dev/null; then
+        echo "Creating namespace ${{ env.NAMESPACE }}"
         kubectl create namespace "${{ env.NAMESPACE }}"
       else
         echo "Namespace ${{ env.NAMESPACE }} already exists."
@@ -116,6 +165,54 @@ runs:
       VAULT_SECRET_COMMON_PATH: ${{ inputs.VAULT_SECRET_COMMON_PATH }}
       LOCAL_SETTINGS: ${{ inputs.LOCAL_SETTINGS }}
       ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+  
+  - name: Create KCR secret
+    if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
+    run: |
+      export KUBECONFIG=kubeconfig.yaml
+      if kubectl get secret kcr-secret --namespace=${{ env.NAMESPACE }} &> /dev/null; then
+        echo "Creating kcr-secrets from variables..."
+        kubectl delete secret kcr-secret --namespace=${{ env.NAMESPACE }}
+        kubectl create secret docker-registry kcr-secret --namespace=${{ env.NAMESPACE }} --docker-server=${{ env.IMAGE_REPOSITORY }} --docker-username=${{ env.KCR_USER }} --docker-password=${{ env.KCR_PASSWORD }}
+      else
+        echo "Creating kcr-secrets from variables..."
+        kubectl create secret docker-registry kcr-secret --namespace=${{ env.NAMESPACE }} --docker-server=${{ env.IMAGE_REPOSITORY }} --docker-username=${{ env.KCR_USER }} --docker-password=${{ env.KCR_PASSWORD }}
+      fi
+    shell: bash
+
+  #- name: Configure AWS creds
+  #  if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
+  #  uses: aws-actions/configure-aws-credentials@v1
+  #  with:
+  #    aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID_ECR }}
+  #    aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY_ECR }}
+  #    aws-region: ${{env.AWS_REGION_EKS}}
+
+  - name: Create ECR Regsitry secret
+    if: ${{ env.K8S_CLUSTER_INFRA == 'EKS' }}
+    run: |
+      export KUBECONFIG=kubeconfig.yaml
+      aws configure set aws_access_key_id ${{ env.AWS_ACCESS_KEY_ID_ECR }} --profile aws-ecr
+      aws configure set aws_secret_access_key ${{ env.AWS_SECRET_ACCESS_KEY_ECR }} --profile aws-ecr
+      aws configure set default.region ${{ env.AWS_REGION_EKS }}
+      AWS_ACCOUNT_ID=$(aws --profile aws-ecr sts get-caller-identity --query "Account" --output text)
+      if kubectl get secret kcr-secret --namespace=${{ env.NAMESPACE }} &> /dev/null; then
+        echo "Deleting existing kcr-secrets and creating new one..."
+        kubectl delete secret kcr-secret --namespace=${{ env.NAMESPACE }}
+        kubectl create secret docker-registry kcr-secret \
+          --docker-server=${AWS_ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION_EKS }}.amazonaws.com \
+          --docker-username=AWS \
+          --docker-password=$(aws --profile aws-ecr ecr get-login-password --region ${{ env.AWS_REGION_EKS }}) \
+          --namespace=${{ env.NAMESPACE }}
+      else
+        echo "Creating kcr-secrets"
+        kubectl create secret docker-registry kcr-secret \
+          --docker-server=${AWS_ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION_EKS }}.amazonaws.com \
+          --docker-username=AWS \
+          --docker-password=$(aws --profile aws-ecr ecr get-login-password --region ${{ env.AWS_REGION_EKS }}) \
+          --namespace=${{ env.NAMESPACE }}
+      fi
+    shell: bash
   
   - name: Login to ECR
     uses: docker/login-action@v1
