@@ -20,6 +20,7 @@ KCR_USER=$KCR_USER
 KCR_PASSWORD=$KCR_PASSWORD
 IMAGE_REPOSITORY=$IMAGE_REPOSITORY
 ECR_REPOSITORY=$ECR_REPOSITORY
+AUTOSCALER=$AUTOSCALER
 
 
 export KUBECONFIG=kubeconfig.yaml
@@ -86,4 +87,15 @@ if [ "${ECR_REPOSITORY}" == "python-django" ]; then
   fi
 else
    echo "Skipping Secrets"
+fi
+
+if [ "${AUTOSCALER}" == "true" ]; then 
+  if kubectl get secret rabbitmq-secret --namespace=${NAMESPACE} &> /dev/null; then
+    echo "Creating rabbitmq-secret from variables..."
+    kubectl delete secret rabbitmq-secret --namespace=${NAMESPACE}
+    kubectl create secret generic --namespace=${NAMESPACE} rabbitmq-secret --from-literal=host=amqp://${SETTINGS_RABBITMQ_USER}:${SETTINGS_RABBITMQ_PASSWORD}@${SETTINGS_RABBITMQ_HOST1}:5672/${SETTINGS_RABBITMQ_USER}
+  else
+    echo "Creating rabbitmq-secret from variables..."
+    kubectl create secret generic --namespace=${NAMESPACE} rabbitmq-secret --from-literal=host=amqp://${SETTINGS_RABBITMQ_USER}:${SETTINGS_RABBITMQ_PASSWORD}@${SETTINGS_RABBITMQ_HOST1}:5672/${SETTINGS_RABBITMQ_USER} 
+  fi
 fi

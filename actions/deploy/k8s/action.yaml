@@ -51,6 +51,7 @@ runs:
         ${{ inputs.VAULT_SECRET_COMMON_PATH }} GITLAB_PROJECT_NUMBER | GITLAB_PROJECT_NUMBER;
         ${{ inputs.VAULT_SECRET_COMMON_PATH }} LOCAL_SETTINGS_NAME | LOCAL_SETTINGS_NAME;
         ${{ inputs.VAULT_SECRET_COMMON_PATH }} NAMESPACE | NAMESPACE;
+        ${{ inputs.VAULT_SECRET_COMMON_PATH }} AUTOSCALER | AUTOSCALER;
         ${{ inputs.VAULT_SECRET_PATH }} MASTER_IP | MASTER_IP;
         ${{ inputs.VAULT_SECRET_PATH }} NODE_PORT | NODE_PORT;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} AWS_ACCESS_KEY_ID_ECR | AWS_ACCESS_KEY_ID_ECR;
@@ -141,6 +142,18 @@ runs:
       fi
     shell: bash
   
+  - name: Create autoscaler secret
+    if: ${{ env.AUTOSCALER == "enabled" }}
+    uses: hashicorp/vault-action@v2
+    with:
+      url: https://${{ inputs.VAULT_SERVER }}/
+      token: ${{ inputs.VAULT_TOKEN }}
+      tlsSkipVerify: true
+      secrets: |
+        ${{ inputs.VAULT_SECRET_PATH }} SETTINGS_RABBITMQ_HOST1 | SETTINGS_RABBITMQ_HOST1;
+        ${{ inputs.VAULT_SECRET_PATH }} SETTINGS_RABBITMQ_PASSWORD | SETTINGS_RABBITMQ_PASSWORD;
+        ${{ inputs.VAULT_SECRET_PATH }} SETTINGS_RABBITMQ_USER | SETTINGS_RABBITMQ_USER;
+
   - name: Create configmap and secrets
     run: |
       ${{ github.action_path }}/scripts/config.sh
