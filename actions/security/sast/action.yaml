@@ -136,7 +136,7 @@ runs:
       if : ${{ inputs.BANDIT_SCAN == 'true' }}
       run: | 
         pip install bandit
-        python3 -m bandit -a file -r -l -i . -f csv -o report.csv --exit-zero
+        python3 -m bandit -a file -r -lll -iii . -f csv -o report.csv --exit-zero
       shell: bash
 
     - name: Check number of lines in report.csv
