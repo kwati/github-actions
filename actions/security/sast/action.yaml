@@ -59,6 +59,10 @@ inputs:
     description: Enable Snyk Scan
     type: boolean
     default: true
+  SYNK_PYTHON_DEP_PATH:
+    description: Path for the Python Dependencies file
+    required: false
+    default: "./requirements.txt"
 
 runs:
   using: composite
@@ -179,7 +183,7 @@ runs:
       run: |
         wget -q https://static.snyk.io/cli/latest/snyk-linux && mv ./snyk-linux ./snyk && chmod +x ./snyk
         ./snyk auth ${{ env.SNYK_TOKEN }}
-        ./snyk test --file=${{ inputs.PYTHON_DEP_PATH }} --project-name=${{ inputs.PROJECT_NAME }} --package-manager=pip --sarif-file-output=snyk.sarif ${{ inputs.EXTRA_ARGS}}
+        ./snyk test --file=${{ inputs.SYNK_PYTHON_DEP_PATH }} --project-name=${{ inputs.PROJECT_NAME }} --package-manager=pip --sarif-file-output=snyk.sarif ${{ inputs.EXTRA_ARGS}}
       working-directory: ${{ inputs.PROJECT_APP_PATH }}
       shell: bash
 
