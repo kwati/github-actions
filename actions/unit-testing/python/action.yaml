@@ -49,8 +49,8 @@ runs:
 
     - name: Database Migration
       run: |
-        python manage.py makemigrations
-        python manage.py migrate
+        python3 manage.py makemigrations
+        python3 manage.py migrate
       working-directory: ${{ inputs.PROJECT_APP_PATH}}
       env:
         SETTINGS_DB_HOST: "localhost"
@@ -62,9 +62,9 @@ runs:
 
     - name: Run Test
       run: |
-        python manage.py test
+        python3 manage.py test
         #sudo chown -R runner:runner ./
-        #python manage.py collectstatic --noinput
+        #python3 manage.py collectstatic --noinput
         coverage run -m pytest -v -s
         #coverage run manage.py test
         coverage report -m
