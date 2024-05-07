@@ -40,6 +40,27 @@ runs:
         filePath: ${{ github.workspace }}/output.md 
         reactions: eyes
 
+    # - name: Scan Helm Charts
+    #   run: |
+    #     trivy fs --scanners vuln,secret,misconfig infrastructure/k8s/ -s CRITICAL
+    #   shell: bash
+
+    - name: Scan Helm Charts
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: fs
+        scan-ref: ${{ github_workspace }}/infrastructure/k8s/
+        severity: CRITICAL
+        format: table
+        output: 'trivy-results.sarif'
+      
+    - name: PR comment with file trivy
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: ${{ github.workspace }}/trivy-results.sarif
+        reactions: eyes      
+
+
     - name: Terraform Format check
       continue-on-error: true
       run: |
