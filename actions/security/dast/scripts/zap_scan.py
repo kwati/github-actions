@@ -117,7 +117,7 @@ def perform_scans(apikey, target, proxy_host, proxy_port, scan_types):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='ZAP Security Scan')
     parser.add_argument('target', help='Target URL to scan')
-    parser.add_argument('apikey', help='ZAP API key')
+    parser.add_argument('-k', '--apikey', help='ZAP API key')
     parser.add_argument('-ph', '--proxy-host', help='Proxy host IP address', default    = '127.0.0.1')
     parser.add_argument('-pp', '--proxy-port', help='Proxy port number', default='8020')
     parser.add_argument('-s', '--spider-scan', action='store_true', help='Perform spider scan')
