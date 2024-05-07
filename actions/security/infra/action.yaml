@@ -49,7 +49,7 @@ runs:
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: config
-        scan-ref: ${{ github.workspace }}/k8s/
+        scan-ref: '.'
         severity: CRITICAL
         format: table
         output: 'trivy-results.sarif'
