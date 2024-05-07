@@ -42,7 +42,7 @@ runs:
 
     - name: Scan Helm Charts
       run: |
-        trivy fs --scanners vuln,secret,misconfig infrastructure/k8s/ -s CRITICAL
+        trivy fs --scanners vuln,secret,misconfig ${{ github.workspace }}/k8s/ -s CRITICAL
       shell: bash
 
     # - name: Scan Helm Charts
