@@ -49,7 +49,7 @@ runs:
 
     - name: Run ZAP Scan
       run: |
-        python  ${{ github.action_path }}/scripts/unauthenticated.py -ph ${{ env.ZAP_HOST }} -pp ${{ env.ZAP_PORT }} ${{ env.TARGET }} ${{ env.API_KEY }} -s
+        python  ${{ github.action_path }}/scripts/zap_scan.py -ph ${{ env.ZAP_HOST }} -pp ${{ env.ZAP_PORT }} ${{ env.TARGET }} ${{ env.API_KEY }} -s
       shell: bash
 
       
