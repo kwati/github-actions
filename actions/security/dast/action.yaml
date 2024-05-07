@@ -1,0 +1,59 @@
+name: Dynamic Application Security Testing
+description: Dynamic Application Security Testing with ZAP
+inputs:
+  VAULT_SERVER:
+    description: VAULT Server
+    type: string
+  VAULT_SECRETS_PATH:
+    description: VAULT secrets path
+    type: string
+  VAULT_TOKEN:
+    description: VAULT Token
+    type: string
+  API_KEY:
+    description: ZAP API KEY
+    type: string
+  ZAP_HOST:
+    description: ZAP API Host
+    type: string
+  ZAP_PORT:
+    description: ZAP API Port
+    type: string
+  TARGET:
+    description: ZAP Target
+    type: string
+
+runs:
+  using: composite
+  steps:
+    - name: Import Secrets
+      uses: hashicorp/vault-action@v2.4.0
+      with:
+        url: https://${{ inputs.VAULT_SERVER }}
+        token: ${{ inputs.VAULT_TOKEN }}
+        tlsSkipVerify: true
+        secrets: |
+          ${{ inputs.VAULT_SECRETS_PATH }} API_KEY | API_KEY;
+
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Environment
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.10   
+
+    - name: Install Dependencies
+      run: |
+        pip install -r  ${{ github.action_path }}/scripts/requirements.txt
+      shell: bash
+
+    - name: Run ZAP Scan
+      run: |
+        python  ${{ github.action_path }}/scripts/unauthenticated.py -ph ${{ env.ZAP_HOST }} -pp ${{ env.ZAP_PORT }} ${{ env.TARGET }} ${{ env.API_KEY }} 
+      shell: bash
+
+      
+  
