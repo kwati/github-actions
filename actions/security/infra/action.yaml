@@ -48,7 +48,7 @@ runs:
     - name: Scan Helm Charts
       uses: aquasecurity/trivy-action@master
       with:
-        scan-type: config
+        scan-type: fs
         scan-ref: '.'
         severity: CRITICAL
         format: table
@@ -57,7 +57,7 @@ runs:
     - name: PR comment with file trivy
       uses: thollander/actions-comment-pull-request@v2
       with:
-        filePath: ${{ github.workspace }}/trivy-results.sarif
+        filePath: trivy-results.sarif
         reactions: eyes      
 
 
