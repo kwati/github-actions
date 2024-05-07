@@ -48,7 +48,7 @@ runs:
     - name: Scan Helm Charts
       uses: aquasecurity/trivy-action@master
       with:
-        scan-type: fs
+        scan-type: config
         scan-ref: ${{ github.workspace }}/k8s/
         severity: CRITICAL
         format: table
