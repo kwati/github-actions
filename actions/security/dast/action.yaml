@@ -36,11 +36,6 @@ runs:
           ${{ inputs.VAULT_SECRETS_PATH }} API_KEY | API_KEY;
           ${{ inputs.VAULT_SECRETS_PATH }} ZAP_HOST | ZAP_HOST;
           ${{ inputs.VAULT_SECRETS_PATH }} ZAP_PORT | ZAP_PORT;
-
-    - name: Checkout Repository
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
     
     - name: Setup Environment
       uses: actions/setup-python@v2
