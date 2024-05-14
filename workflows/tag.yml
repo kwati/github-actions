@@ -1,0 +1,60 @@
+name: Deploy Tags
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Specify the release type: major, minor, or patch'
+        required: true
+        default: 'patch'
+
+jobs:
+  build:
+    runs-on: [self-hosted, dcrunner2]
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+          fetch-depth: '0'
+
+    - name: Set Release Type
+      id: set_release_type
+      run: echo "RELEASE_TYPE=${{ github.event.inputs.release_type }}" >> $GITHUB_ENV
+
+    - name: Generate Git Tag
+      id: generate_tag
+      run: |
+        VERSION_PREFIX="v"
+        VERSION_MAJOR_MINOR="1.0"
+        VERSION_PATCH=$(git tag --list "${VERSION_PREFIX}${VERSION_MAJOR_MINOR}.*" --sort=-version:refname | head -n 1 | grep -oE '[0-9]+$')
+        if [ -z "$VERSION_PATCH" ]; then
+          VERSION_PATCH=0
+        else
+          VERSION_PATCH=$((VERSION_PATCH + 1))
+        fi
+
+        RELEASE_TYPE=${{ env.RELEASE_TYPE }}
+
+        if [ "$RELEASE_TYPE" == "major" ]; then
+          VERSION_MAJOR_MINOR=$(echo $VERSION_MAJOR_MINOR | awk -F'.' '{print $1+1"."0}')
+          VERSION_PATCH=0
+        elif [ "$RELEASE_TYPE" == "minor" ]; then
+          VERSION_MAJOR_MINOR=$(echo $VERSION_MAJOR_MINOR | awk -F'.' '{print $1"."$2+1}')
+          VERSION_PATCH=0
+        fi
+
+        NEW_TAG="${VERSION_PREFIX}${VERSION_MAJOR_MINOR}.${VERSION_PATCH}"
+        echo "Generated new tag: $NEW_TAG"
+        echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+
+    - name: Push Git Tag
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "system@khalti.com"
+        git tag $NEW_TAG
+        git push origin $NEW_TAG
