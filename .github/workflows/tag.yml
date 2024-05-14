@@ -3,7 +3,7 @@ name: Release Tags
 on:
   push:
     branches:
-      - tagversion
+      - main
   workflow_dispatch:
     inputs:
       release_type:
