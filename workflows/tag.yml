@@ -1,9 +1,9 @@
-name: Deploy Tags
+name: Release Tags
 
 on:
   push:
     branches:
-      - main
+      - tagversion
   workflow_dispatch:
     inputs:
       release_type:
@@ -11,6 +11,8 @@ on:
         required: true
         default: 'patch'
 
+env: 
+  release_type: "patch"
 jobs:
   build:
     runs-on: [self-hosted, dcrunner2]
@@ -24,7 +26,8 @@ jobs:
 
     - name: Set Release Type
       id: set_release_type
-      run: echo "RELEASE_TYPE=${{ github.event.inputs.release_type }}" >> $GITHUB_ENV
+      #run: echo "RELEASE_TYPE=${{ github.event.inputs.release_type }}" >> $GITHUB_ENV
+      run: echo "RELEASE_TYPE=${{ env.release_type }}" >> $GITHUB_ENV
 
     - name: Generate Git Tag
       id: generate_tag
