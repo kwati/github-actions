@@ -40,6 +40,17 @@ runs:
         filePath: ${{ github.workspace }}/output.md 
         reactions: eyes
 
+    - name: Scan Helm Charts
+      run: |
+        trivy fs --scanners vuln,secret,misconfig ${{ github.workspace }}/k8s/ -s CRITICAL --format table --output scan-results
+      shell: bash
+
+    - name: PR comment with file trivy
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: scan-results
+        reactions: eyes 
+  
     - name: Terraform Format check
       continue-on-error: true
       run: |
@@ -49,7 +60,7 @@ runs:
     - name: Terraform Code Quality
       continue-on-error: true
       run: |
-        checkov --directory ${{ github.workspace }}/terraform/ --quiet --output github_failed_only --enable-secret-scan-all-files --no-fail-on-crash > quality
+        checkov --directory ${{ github.workspace }}/terraform/ --quiet --output github_failed_only --enable-secret-scan-all-files --no-fail-on-crash> quality
       shell: bash
 
     - name: PR comment with Terraform Quality check file
