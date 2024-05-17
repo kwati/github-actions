@@ -31,25 +31,25 @@ runs:
     
     - name: Format output for PR
       run: |
-        python3 ${{ github.action_path }}/scripts/formater.py report.json output.md
+        python3 ${{ github.action_path }}/scripts/formater.py report.json ansible-lint.md
       shell: bash
 
-    - name: PR comment with file ansible
-      uses: thollander/actions-comment-pull-request@v2
+    - name: Archive Ansible lint results
+      uses: actions/upload-artifact@v4
       with:
-        filePath: ${{ github.workspace }}/output.md 
-        reactions: eyes
+        name: ansible report
+        path: ${{ github.workspace }}/ansible-lint.md
 
     - name: Scan Helm Charts
       run: |
-        trivy fs --scanners vuln,secret,misconfig ${{ github.workspace }}/k8s/ -s CRITICAL --format table --output scan-results
+        trivy fs --scanners vuln,secret,misconfig ${{ github.workspace }}/k8s/ -s CRITICAL --format table --output helm-scan-report
       shell: bash
 
-    - name: PR comment with file trivy
-      uses: thollander/actions-comment-pull-request@v2
+    - name: Archive Helm code quality results
+      uses: actions/upload-artifact@v4
       with:
-        filePath: scan-results
-        reactions: eyes 
+        name: helm scan report
+        path: ${{ github.workspace }}/helm-scan-report
   
     - name: Terraform Format check
       continue-on-error: true
@@ -60,12 +60,12 @@ runs:
     - name: Terraform Code Quality
       continue-on-error: true
       run: |
-        checkov --directory ${{ github.workspace }}/terraform/ --quiet --output github_failed_only --enable-secret-scan-all-files --no-fail-on-crash> quality
+        checkov --directory ${{ github.workspace }}/terraform/ --quiet --output github_failed_only --enable-secret-scan-all-files --no-fail-on-crash> terraform-quality
       shell: bash
-
-    - name: PR comment with Terraform Quality check file
-      uses: thollander/actions-comment-pull-request@v2
+    
+    - name: Archive Terraform code quality results
+      uses: actions/upload-artifact@v4
       with:
-        filePath: ${{ github.workspace }}/quality
-        reactions: eyes
+        name: Terraform Report
+        path: ${{ github.workspace }}/terraform-quality
     
