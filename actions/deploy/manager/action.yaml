@@ -58,14 +58,14 @@ runs:
       curl -H "X-Vault-Token: ${{ inputs.VAULT_TOKEN }}" https://${{ inputs.VAULT_SERVER }}/v1/${{ inputs.VAULT_SECRET_PATH }} | jq -r .data > .env.json
       curl -H "X-Vault-Token: ${{ inputs.VAULT_TOKEN }}" https://${{ inputs.VAULT_SERVER }}/v1/${{ inputs.VAULT_SECRET_COMMON_PATH }} | jq -r .data > .common.env.json
       cat .env.json | jq -r 'to_entries[] | "\(.key)=\(.value)"' > .env
-      cat .common.env.json | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> .env && cp .env ./app
+      cat .common.env.json | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> .env && cp .env ./WORK_DIR
     shell: bash
 
   - name: Download Local Settings from gitlab
     run: |
       if [ "${{ inputs.LOCAL_SETTINGS }}" == "true" ]; then
         echo "Downloading Local Settings File" 
-        curl -H "PRIVATE-TOKEN: ${{ env.GITLAB_TOKEN }}" "${{ env.GITLAB_SERVER }}/api/v4/projects/${{ env.GITLAB_PROJECT_NUMBER }}/repository/files/${{env.ENVIRONMENT}}%2F${{ env.LOCAL_SETTINGS_NAME }}/raw?ref=main" -o ${{ env.DJANGO_MODULE }}/settings/${{ env.LOCAL_SETTINGS_NAME }}
+        curl -H "PRIVATE-TOKEN: ${{ env.GITLAB_TOKEN }}" "${{ env.GITLAB_SERVER }}/api/v4/projects/${{ env.GITLAB_PROJECT_NUMBER }}/repository/files/${{env.ENVIRONMENT}}%2F${{ env.LOCAL_SETTINGS_NAME }}/raw?ref=main" -o ${{ env.WORK_DIR }}/${{ env.DJANGO_MODULE }}/settings/${{ env.LOCAL_SETTINGS_NAME }}
       else
         echo "Skipping Local Setting"
       fi
