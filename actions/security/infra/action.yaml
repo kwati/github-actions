@@ -29,11 +29,11 @@ runs:
       with:
         filters: |
           ansible:
-            - '${{ github.workspace }}/infrastructure/ansible/**'
+            - 'ansible/**'
           helm:
-            - '${{ github.workspace }}/infrastructure/k8s/**'
+            - 'k8s/**'
           terraform:
-            - '${{ github.workspace }}/infrastructure/terraform/**'
+            - 'terraform/**'
       
     - name: Lint ansible playbooks
       if: steps.changed-files.outputs.ansible == 'true'
