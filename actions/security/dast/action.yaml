@@ -55,5 +55,12 @@ runs:
         python  ${{ github.action_path }}/scripts/zap_scan.py -ph ${{ env.ZAP_HOST }} -pp ${{ env.ZAP_PORT }} ${{ env.TARGET }} -k ${{ env.API_KEY }} -as
       shell: bash
 
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.IMAGE_REPOSITORY }}
+        username: ${{ env.KCR_USER }}
+        password: ${{ env.KCR_PASSWORD }}
+
       
   
