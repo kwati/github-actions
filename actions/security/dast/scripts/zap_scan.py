@@ -84,7 +84,7 @@ def ajax_spider_scan(apikey, target, proxy_host, proxy_port):
     print('Ajax Spider completed')
     
     html_report = zap.core.htmlreport()
-    report_filename = 'ajax_spider_report.html'
+    report_filename = 'spider_report.html'
     report_path = os.path.join(os.getcwd(), report_filename)  # Set your desired report path
     write_report(report_path, html_report)
     return report_filename
@@ -98,7 +98,7 @@ def active_scan(apikey, target, proxy_host, proxy_port):
         time.sleep(5)
         
     html_report = zap.core.htmlreport()
-    report_filename = 'active_scan.html'
+    report_filename = 'spider_report.html'
     report_path = os.path.join(os.getcwd(), report_filename)  # Set your desired report path
     write_report(report_path, html_report)
 
