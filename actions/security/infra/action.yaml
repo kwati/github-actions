@@ -1,104 +1,90 @@
 name: Infra Repo Code Analysis
 description: Static Code Analysis
-
-on:
-  push:
-    paths:
-      - 'ansible/**'
-      - 'k8s/**'
-      - 'terraform/**'
-  pull_request:
-    paths:
-      - 'ansible/**'
-      - 'k8s/**'
-      - 'terraform/**'
-
 inputs:
   PYTHON_VERSION:
     description: Python Version
     default: '3.11'
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+runs:
+  using: composite
+  steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Environment
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.PYTHON_VERSION }}
 
-      - name: Setup Environment
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ inputs.PYTHON_VERSION }}
+    - name: Install Dependencies
+      run: |
+        pip install ansible-lint argparge checkov
+      shell: bash
 
-      - name: Install Dependencies
-        run: |
-          pip install ansible-lint argparge checkov
-        shell: bash
+    - name: Set changed files output
+      id: changed-files
+      uses: dorny/paths-filter@v2
+      with:
+        filters: |
+          ansible:
+            - 'ansible/**'
+          helm:
+            - 'k8s/**'
+          terraform:
+            - 'terraform/**'
+      
+    - name: Lint ansible playbooks
+      if: steps.changed-files.outputs.ansible == 'true'
+      continue-on-error: true
+      run: |
+        ANSIBLE_ROLES_PATH=${{ github.workspace }}/infrastructure/ansible/roles ansible-lint -p ${{ github.workspace }}/ansible -f json > report.json
+      shell: bash
+    
+    - name: Format output for PR
+      if: steps.changed-files.outputs.ansible == 'true'
+      run: |
+        python3 ${{ github.action_path }}/scripts/formater.py report.json ansible-lint.md
+      shell: bash
 
-      - name: Set changed files output
-        id: changed-files
-        uses: dorny/paths-filter@v2
-        with:
-          filters: |
-            ansible:
-              - 'ansible/**'
-            helm:
-              - 'k8s/**'
-            terraform:
-              - 'terraform/**'
+    - name: Archive Ansible lint results
+      if: steps.changed-files.outputs.ansible == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ansible report
+        path: ${{ github.workspace }}/ansible-lint.md
 
-      - name: Lint ansible playbooks
-        if: steps.changed-files.outputs.ansible == 'true'
-        continue-on-error: true
-        run: |
-          ANSIBLE_ROLES_PATH=${{ github.workspace }}/infrastructure/ansible/roles ansible-lint -p ${{ github.workspace }}/ansible -f json > report.json
-        shell: bash
+    - name: Scan Helm Charts
+      if: steps.changed-files.outputs.helm == 'true'
+      run: |
+        trivy fs --scanners vuln,secret,misconfig ${{ github.workspace }}/k8s/ -s CRITICAL --format table --output helm-scan-report
+      shell: bash
 
-      - name: Format output for PR
-        if: steps.changed-files.outputs.ansible == 'true'
-        run: |
-          python3 ${{ github.action_path }}/scripts/formater.py report.json ansible-lint.md
-        shell: bash
+    - name: Archive Helm code quality results
+      if: steps.changed-files.outputs.helm == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: helm scan report
+        path: ${{ github.workspace }}/helm-scan-report
+  
+    - name: Terraform Format check
+      if: steps.changed-files.outputs.terraform == 'true'
+      continue-on-error: true
+      run: |
+        terraform fmt -check -recursive
+      shell: bash
 
-      - name: Archive Ansible lint results
-        if: steps.changed-files.outputs.ansible == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ansible report
-          path: ${{ github.workspace }}/ansible-lint.md
-
-      - name: Scan Helm Charts
-        if: steps.changed-files.outputs.helm == 'true'
-        run: |
-          trivy fs --scanners vuln,secret,misconfig ${{ github.workspace }}/k8s/ -s CRITICAL --format table --output helm-scan-report
-        shell: bash
-
-      - name: Archive Helm code quality results
-        if: steps.changed-files.outputs.helm == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: helm scan report
-          path: ${{ github.workspace }}/helm-scan-report
-
-      - name: Terraform Format check
-        if: steps.changed-files.outputs.terraform == 'true'
-        continue-on-error: true
-        run: |
-          terraform fmt -check -recursive
-        shell: bash
-
-      - name: Terraform Code Quality
-        if: steps.changed-files.outputs.terraform == 'true'
-        continue-on-error: true
-        run: |
-          checkov --directory ${{ github.workspace }}/terraform/ --quiet --output github_failed_only --enable-secret-scan-all-files --no-fail-on-crash > terraform-quality
-        shell: bash
-
-      - name: Archive Terraform code quality results
-        if: steps.changed-files.outputs.terraform == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: Terraform Report
-          path: ${{ github.workspace }}/terraform-quality
+    - name: Terraform Code Quality
+      if: steps.changed-files.outputs.terraform == 'true'
+      continue-on-error: true
+      run: |
+        checkov --directory ${{ github.workspace }}/terraform/ --quiet --output github_failed_only --enable-secret-scan-all-files --no-fail-on-crash > terraform-quality
+      shell: bash
+    
+    - name: Archive Terraform code quality results
+      if: steps.changed-files.outputs.terraform == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: Terraform Report
+        path: ${{ github.workspace }}/terraform-quality
