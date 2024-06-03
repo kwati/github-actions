@@ -19,6 +19,15 @@ inputs:
   ZAP_PORT:
     description: ZAP API Port
     type: string
+  KCR_USER:
+    description: Docker User login
+    type: string
+  KCR_PASSWORD:
+    description: Docker User Pass
+    type: string
+  IMAGE_REPOSITORY:
+    description: Docker Image Repositories
+    type: string
   TARGET:
     description: ZAP Target
     type: string
@@ -61,6 +70,10 @@ runs:
         registry: ${{ env.IMAGE_REPOSITORY }}
         username: ${{ env.KCR_USER }}
         password: ${{ env.KCR_PASSWORD }}
+      
+    
+
+    
 
       
   
