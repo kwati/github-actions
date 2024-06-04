@@ -16,6 +16,9 @@ inputs:
   VAULT_SECRETS_CICD_PATH:
     description: Vault Secrets Path
     required: true
+  ENVIRONMENT:
+    description: Deploy Environment
+    required: true
   IMAGE_TAG:
     description: Image Tag
     required: true
@@ -44,7 +47,6 @@ runs:
       token: ${{ inputs.VAULT_TOKEN }}
       tlsSkipVerify: true
       secrets: |
-        ${{ inputs.VAULT_SECRET_COMMON_PATH }} ENVIRONMENT | ENVIRONMENT;
         ${{ inputs.VAULT_SECRET_COMMON_PATH }} ECR_REPOSITORY | ECR_REPOSITORY;
         ${{ inputs.VAULT_SECRET_COMMON_PATH }} PROJECT_NAME | PROJECT_NAME;
         ${{ inputs.VAULT_SECRET_COMMON_PATH }} VERSION | VERSION;
@@ -225,7 +227,7 @@ runs:
     run: |
       export KUBECONFIG=kubeconfig.yaml
       helm upgrade ${{ env.PROJECT_NAME }} --install oci://${{ env.REGISTRY }}/${{ env.ECR_REPOSITORY }} --version ${{ env.VERSION }} --set replicas=${{ inputs.REPLICAS }} \
-      --namespace=${{ env.NAMESPACE }} --set nameOverride=${{ env.PROJECT_NAME }} --set image.repository=${{ env.IMAGE_REPOSITORY }}/${{ github.repository }}-${{ env.ENVIRONMENT }}:${{ inputs.IMAGE_TAG }} \
+      --namespace=${{ env.NAMESPACE }} --set nameOverride=${{ env.PROJECT_NAME }} --set image.repository=${{ env.IMAGE_REPOSITORY }}/${{ github.repository }}-${{ inputs.ENVIRONMENT }}:${{ inputs.IMAGE_TAG }} \
       --set dc=${{ inputs.DATACENTER }} --set sidecar.filebeat.logstashIp=${{ env.LOGSTASH_IP }} --set sidecar.filebeat.logstashPort=5045 \
       --set env.DATACENTER=${{ inputs.DATACENTER }} ${{ inputs.EXTRA_HELM_ARGS_1 }} ${{ inputs.EXTRA_HELM_ARGS_2 }} ${{ inputs.EXTRA_HELM_ARGS_3 }}
     shell: bash
