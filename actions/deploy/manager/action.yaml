@@ -91,7 +91,7 @@ runs:
   
   - name: Rsync to Manager Node
     run: |
-      ssh ${{ env.DEPLOY_USER }}@${{ env.MANAGER_NODE_IP }} "chown -R ${{ env.DEPLOY_USER }}: /opt/${{ env.PROJECT_NAME }} && rm -rf /opt/${{ env.PROJECT_NAME }}/*"
+      ssh ${{ env.DEPLOY_USER }}@${{ env.MANAGER_NODE_IP }} "chown -R ${{ env.DEPLOY_USER }}: /opt/${{ env.PROJECT_NAME }}"
       rsync -avpPz --exclude ".git" --exclude ".gitignore" ./ ${{ env.DEPLOY_USER }}@${{ env.MANAGER_NODE_IP }}:/opt/${{ env.PROJECT_NAME }}
       ssh ${{ env.DEPLOY_USER }}@${{ env.MANAGER_NODE_IP }} 'docker login https://${{ env.IMAGE_REPOSITORY }} --username ${{ env.KCR_USER }} --password ${{ env.KCR_PASSWORD }}'
       ssh ${{ env.DEPLOY_USER }}@${{ env.MANAGER_NODE_IP }} 'cd /opt/${{ env.PROJECT_NAME }} && docker pull ${{ env.IMAGE_REPOSITORY }}/${{ github.repository }}-${{ inputs.ENVIRONMENT }}:${{ inputs.IMAGE_TAG }}'
