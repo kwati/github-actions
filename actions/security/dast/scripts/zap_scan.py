@@ -98,7 +98,7 @@ def active_scan(apikey, target, proxy_host, proxy_port):
         time.sleep(5)
         
     html_report = zap.core.htmlreport()
-    report_filename = 'active_scan.html'
+    report_filename = 'spider_report.html'
     report_path = os.path.join(os.getcwd(), report_filename)  # Set your desired report path
     write_report(report_path, html_report)
 
@@ -141,6 +141,6 @@ if __name__ == "__main__":
     if args.active_scan:
         scan_types.append('active')
 
-    delete_alerts(apikey, proxy_host, proxy_port)
+    # delete_alerts(apikey, proxy_host, proxy_port)
 
     perform_scans(apikey, target, proxy_host, proxy_port, scan_types)

@@ -23,49 +23,68 @@ runs:
         pip install ansible-lint argparge checkov
       shell: bash
 
+    - name: Set changed files output
+      id: changed-files
+      uses: dorny/paths-filter@v2
+      with:
+        filters: |
+          ansible:
+            - 'ansible/**'
+          helm:
+            - 'k8s/**'
+          terraform:
+            - 'terraform/**'
+      
     - name: Lint ansible playbooks
+      if: steps.changed-files.outputs.ansible == 'true'
       continue-on-error: true
       run: |
         ANSIBLE_ROLES_PATH=${{ github.workspace }}/infrastructure/ansible/roles ansible-lint -p ${{ github.workspace }}/ansible -f json > report.json
       shell: bash
     
     - name: Format output for PR
+      if: steps.changed-files.outputs.ansible == 'true'
       run: |
         python3 ${{ github.action_path }}/scripts/formater.py report.json ansible-lint.md
       shell: bash
 
     - name: Archive Ansible lint results
+      if: steps.changed-files.outputs.ansible == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: ansible report
         path: ${{ github.workspace }}/ansible-lint.md
 
     - name: Scan Helm Charts
+      if: steps.changed-files.outputs.helm == 'true'
       run: |
         trivy fs --scanners vuln,secret,misconfig ${{ github.workspace }}/k8s/ -s CRITICAL --format table --output helm-scan-report
       shell: bash
 
     - name: Archive Helm code quality results
+      if: steps.changed-files.outputs.helm == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: helm scan report
         path: ${{ github.workspace }}/helm-scan-report
   
     - name: Terraform Format check
+      if: steps.changed-files.outputs.terraform == 'true'
       continue-on-error: true
       run: |
         terraform fmt -check -recursive
       shell: bash
 
     - name: Terraform Code Quality
+      if: steps.changed-files.outputs.terraform == 'true'
       continue-on-error: true
       run: |
-        checkov --directory ${{ github.workspace }}/terraform/ --quiet --output github_failed_only --enable-secret-scan-all-files --no-fail-on-crash> terraform-quality
+        checkov --directory ${{ github.workspace }}/terraform/ --quiet --output github_failed_only --enable-secret-scan-all-files --no-fail-on-crash > terraform-quality
       shell: bash
     
     - name: Archive Terraform code quality results
+      if: steps.changed-files.outputs.terraform == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: Terraform Report
         path: ${{ github.workspace }}/terraform-quality
-    
