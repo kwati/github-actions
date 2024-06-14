@@ -99,8 +99,8 @@ runs:
     if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
     run: |
       curl --header "X-Vault-Token: ${{ inputs.VAULT_TOKEN }}" --request GET https://vault.khalti.com.np/v1/infra/k8s/kubeconfig/${{ env.K8S_CLUSTER_NAME }} | jq -r ".data.kubeconfig" | base64 -d > kubeconfig.yaml
-      export KUBECONFIG=${WORKSPACE}/kubeconfig.yaml
-      chmod 600 ${WORKSPACE}/kubeconfig.yaml
+      export KUBECONFIG=${{ github.workspace }}/kubeconfig.yaml
+      chmod 600 ${{ github.workspace }}/kubeconfig.yaml
     shell: bash
   
   - name: 'Configure AWS creds'
