@@ -53,6 +53,7 @@ runs:
         ${{ inputs.VAULT_SECRET_COMMON_PATH }} NAMESPACE | NAMESPACE;
         ${{ inputs.VAULT_SECRET_COMMON_PATH }} AUTOSCALER | AUTOSCALER;
         ${{ inputs.VAULT_SECRET_COMMON_PATH }} HTTP_HOST | HTTP_HOST;
+        ${{ inputs.VAULT_SECRET_COMMON_PATH }} K8S_CLUSTER_NAME | K8S_CLUSTER_NAME;
         ${{ inputs.VAULT_SECRET_PATH }} MASTER_IP | MASTER_IP;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} AWS_ACCESS_KEY_ID_ECR | AWS_ACCESS_KEY_ID_ECR;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} AWS_SECRET_ACCESS_KEY_ECR | AWS_SECRET_ACCESS_KEY_ECR;
@@ -80,25 +81,26 @@ runs:
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} AWS_SECRET_ACCESS_KEY_EKS | AWS_SECRET_ACCESS_KEY_EKS;
         ${{ inputs.VAULT_SECRETS_CICD_PATH }} K8S_CLUSTER_INFRA | K8S_CLUSTER_INFRA;
 
-  - name: Install SSH Key
-    if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
-    uses: shimataro/ssh-key-action@v2
-    with:
-      key: ${{ env.SSH_KEY }}
-      known_hosts: 'SSH KEY'
-      if_key_exists: replace
+  #- name: Install SSH Key
+  #  if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
+  #  uses: shimataro/ssh-key-action@v2
+  #  with:
+  #    key: ${{ env.SSH_KEY }}
+  #    known_hosts: 'SSH KEY'
+  #    if_key_exists: replace
   
-  - name: Add Known Hosts
-    if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
-    run: |
-      ssh-keyscan -H ${{ env.MASTER_IP }} >> ~/.ssh/known_hosts
-    shell: bash
+  #- name: Add Known Hosts
+  #  if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
+  #  run: |
+  #    ssh-keyscan -H ${{ env.MASTER_IP }} >> ~/.ssh/known_hosts
+  #  shell: bash
 
   - name: Extract Kubeconfig file
     if: ${{ env.K8S_CLUSTER_INFRA != 'EKS' }}
     run: |
-      scp root@${{ env.MASTER_IP }}:/etc/rancher/rke2/rke2.yaml kubeconfig.yaml
-      sed -i "s|https://127.0.0.1:6443|https://${{ env.MASTER_IP }}:6443|g" kubeconfig.yaml
+      curl --header "X-Vault-Token: ${{ inputs.VAULT_TOKEN }}" --request GET https://vault.khalti.com.np/v1/infra/k8s/kubeconfig/${{ env.K8S_CLUSTER_NAME }} | jq -r ".data.kubeconfig" | base64 -d > kubeconfig.yaml
+      export KUBECONFIG=${{ github.workspace }}/kubeconfig.yaml
+      chmod 600 ${{ github.workspace }}/kubeconfig.yaml
     shell: bash
   
   - name: 'Configure AWS creds'
