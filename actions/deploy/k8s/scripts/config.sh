@@ -99,3 +99,13 @@ if [ "${AUTOSCALER}" == "true" ]; then
     kubectl create secret generic --namespace=${NAMESPACE} rabbitmq-secret --from-literal=host=amqp://${SETTINGS_RABBITMQ_USER}:${SETTINGS_RABBITMQ_PASSWORD}@${SETTINGS_RABBITMQ_HOST1}:5672/${SETTINGS_RABBITMQ_USER} 
   fi
 fi
+
+if [ "${NGINX_EXTRA_CONFIG}" == "true" ]; then 
+  mv .helpers/scripts/nginx.in include.in
+  if kubectl get configmaps nginx-extra-config --namespace=${NAMESPACE} &> /dev/null; then
+    kubectl delete configmap nginx-extra-config --namespace=${NAMESPACE}
+    kubectl create configmap nginx-extra-config --from-file=include.in --namespace=${NAMESPACE}
+  else
+    kubectl create configmap nginx-extra-config --from-file=include.in --namespace=${NAMESPACE}
+  fi
+fi
