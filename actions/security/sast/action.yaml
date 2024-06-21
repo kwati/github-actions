@@ -96,7 +96,7 @@ runs:
       run: sonar-scanner
         -Dsonar.host.url=${{ env.SONARQUBE_HOST }}
         -Dsonar.login=${{ env.SONARQUBE_TOKEN }}
-        -Dsonar.projectKey= ${{ env.PROJECT_NAME }}
+        -Dsonar.projectKey=${{ env.PROJECT_NAME }}
         -Dsonar.sources=${{ github.workspace }}
         -Dsonar.pullrequest.key=${{github.event.pull_request.number}}
         -Dsonar.pullrequest.branch=${{github.head_ref}}
