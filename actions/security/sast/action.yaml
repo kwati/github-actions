@@ -92,7 +92,6 @@ runs:
 
     - name: SonarQube Scan
       if: ${{ inputs.SONARQUBE_SCAN == 'true' }}
-      env:
       run: sonar-scanner
         -Dsonar.host.url=${{ env.SONARQUBE_HOST }}
         -Dsonar.login=${{ env.SONARQUBE_TOKEN }}
