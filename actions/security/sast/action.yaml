@@ -124,8 +124,6 @@ runs:
       continue-on-error: true
       with:
         path: ${{ github.workspace }}
-        base: ${{ github.event.repository.default_branch }}
-        head: ${{ github.ref }}
         extra_args: --debug --only-verified
 
     - name: Setup Python
