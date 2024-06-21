@@ -84,6 +84,7 @@ runs:
       run: |
         echo "SONARQUBE_HOST=${{ inputs.SONARQUBE_HOST }}"  >> $GITHUB_ENV
         echo "SONARQUBE_TOKEN=${{ inputs.SONARQUBE_TOKEN }}"  >> $GITHUB_ENV
+        echo "PROJECT_NAME=${{ inputs.PROJECT_NAME }}"  >> $GITHUB_ENV
       shell: bash
   
     - name: Setup SonarQube
