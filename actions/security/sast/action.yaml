@@ -123,8 +123,8 @@ runs:
       uses: trufflesecurity/trufflehog@main
       continue-on-error: true
       with:
-        base: ""
-        head: ${{ github.ref_name }}
+        # base: ""
+        # head: ${{ github.ref_name }}
         extra_args: --debug --only-verified
 
     - name: Setup Python
