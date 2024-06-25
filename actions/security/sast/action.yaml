@@ -137,6 +137,7 @@ runs:
     - name: Install and scan with Bandit
       if : ${{ inputs.BANDIT_SCAN == 'true' }}
       run: | 
+        python -m pip install --upgrade pip
         pip install bandit
         python3 -m bandit -a file -r -lll -iii . -f csv -o report.csv --exit-zero
       shell: bash
