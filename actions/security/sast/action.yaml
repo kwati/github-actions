@@ -127,7 +127,6 @@ runs:
         extra_args: --debug --only-verified
 
     - name: Setup Python
-      if: ${{ inputs.BANDIT_SCAN == 'true' && inputs.SNYK_SCAN == 'true' }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ inputs.PYTHON_VERSION }}
@@ -139,7 +138,7 @@ runs:
       run: | 
         pip install --upgrade pip
       shell: bash
-      
+
     - name: Install and scan with Bandit
       if : ${{ inputs.BANDIT_SCAN == 'true' }}
       run: | 
