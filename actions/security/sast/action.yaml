@@ -136,7 +136,7 @@ runs:
     - name: Upgrade PIP
       if: ${{ inputs.BANDIT_SCAN == 'true' && inputs.SNYK_SCAN == 'true' }}
       run: | 
-        pip install --upgrade pip
+        python -m pip install pip==23.0.1
       shell: bash
 
     - name: Install and scan with Bandit
