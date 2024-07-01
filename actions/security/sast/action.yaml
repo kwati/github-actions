@@ -23,7 +23,6 @@ inputs:
   PYTHON_VERSION:
     description: Python Version
     required: true
-    default: "3.10"       
   PYTHON_DEP_PATH:
     description: Path for the Python Dependencies file
     required: true
@@ -125,8 +124,7 @@ runs:
         trufflehog filesystem ${{ github.workspace }}/${{ env.PROJECT_NAME }} --no-update
       shell: bash
 
-    - name: Setup Python/home/runner/actions-runner/_work/***/***/.git/config
-
+    - name: Setup python
       if: ${{ inputs.BANDIT_SCAN == 'true' && inputs.SNYK_SCAN == 'true' }}
       uses: actions/setup-python@v2
       with:
