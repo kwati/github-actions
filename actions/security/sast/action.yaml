@@ -171,6 +171,7 @@ runs:
     - name: Install Project Dependencies for snyk
       if: ${{ inputs.SNYK_SCAN == 'true' }}
       run: |
+        pip install --upgrade pip==24.0
         pip install -r ${{ inputs.PYTHON_DEP_PATH }}
       shell: bash
 
