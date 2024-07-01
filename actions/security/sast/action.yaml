@@ -122,10 +122,11 @@ runs:
       id: trufflehog
       continue-on-error: true
       run: |
-        trufflehog filesystem ${{ github.workspace }}/${{ PROJECT_NAME }} --no-update
+        trufflehog filesystem ${{ github.workspace }}/${{ env.PROJECT_NAME }} --no-update
       shell: bash
 
-    - name: Setup Python
+    - name: Setup Python/home/runner/actions-runner/_work/***/***/.git/config
+
       if: ${{ inputs.BANDIT_SCAN == 'true' && inputs.SNYK_SCAN == 'true' }}
       uses: actions/setup-python@v2
       with:
