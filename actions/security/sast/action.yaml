@@ -23,7 +23,6 @@ inputs:
   PYTHON_VERSION:
     description: Python Version
     required: true
-    default: "3.10"       
   PYTHON_DEP_PATH:
     description: Path for the Python Dependencies file
     required: true
@@ -85,6 +84,7 @@ runs:
       run: |
         echo "SONARQUBE_HOST=${{ inputs.SONARQUBE_HOST }}"  >> $GITHUB_ENV
         echo "SONARQUBE_TOKEN=${{ inputs.SONARQUBE_TOKEN }}"  >> $GITHUB_ENV
+        echo "PROJECT_NAME=${{ inputs.PROJECT_NAME }}"  >> $GITHUB_ENV
       shell: bash
   
     - name: Setup SonarQube
@@ -96,7 +96,7 @@ runs:
       run: sonar-scanner
         -Dsonar.host.url=${{ env.SONARQUBE_HOST }}
         -Dsonar.login=${{ env.SONARQUBE_TOKEN }}
-        -Dsonar.projectKey=${{ env.PROJECT_KEY }}
+        -Dsonar.projectKey=${{ env.PROJECT_NAME }}
         -Dsonar.sources=${{ github.workspace }}
         -Dsonar.pullrequest.key=${{github.event.pull_request.number}}
         -Dsonar.pullrequest.branch=${{github.head_ref}}
@@ -120,15 +120,12 @@ runs:
     - name: Secret Scan
       if: ${{ inputs.TRUFFLEHOG_SCAN == 'true' }}
       id: trufflehog
-      uses: trufflesecurity/trufflehog@main
       continue-on-error: true
-      with:
-        path: ${{ github.workspace }}
-        base: "${{ github.event.repository.default_branch }}"
-        head: HEAD
-        extra_args: --debug
+      run: |
+        trufflehog filesystem ${{ github.workspace }}/${{ env.PROJECT_NAME }} --no-update
+      shell: bash
 
-    - name: Setup Python
+    - name: Setup python
       if: ${{ inputs.BANDIT_SCAN == 'true' && inputs.SNYK_SCAN == 'true' }}
       uses: actions/setup-python@v2
       with:
@@ -175,6 +172,7 @@ runs:
     - name: Install Project Dependencies for snyk
       if: ${{ inputs.SNYK_SCAN == 'true' }}
       run: |
+        pip install --upgrade pip==24.0
         pip install -r ${{ inputs.PYTHON_DEP_PATH }}
       shell: bash
 
@@ -183,7 +181,7 @@ runs:
       run: |
         wget -q https://static.snyk.io/cli/latest/snyk-linux && mv ./snyk-linux ./snyk && chmod +x ./snyk
         ./snyk auth ${{ env.SNYK_TOKEN }}
-        ./snyk test --file=${{ inputs.SYNK_PYTHON_DEP_PATH }} --project-name=${{ inputs.PROJECT_NAME }} --package-manager=pip --sarif-file-output=snyk.sarif ${{ inputs.EXTRA_ARGS}}
+        ./snyk test --file=${{ inputs.SYNK_PYTHON_DEP_PATH }} --project-name=${{ inputs.PROJECT_NAME }} --package-manager=pip --sarif-file-output=snyk.sarif --command=python3
       working-directory: ${{ inputs.PROJECT_APP_PATH }}
       shell: bash
 
