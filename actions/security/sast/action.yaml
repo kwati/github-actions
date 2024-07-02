@@ -84,6 +84,7 @@ runs:
       run: |
         echo "SONARQUBE_HOST=${{ inputs.SONARQUBE_HOST }}"  >> $GITHUB_ENV
         echo "SONARQUBE_TOKEN=${{ inputs.SONARQUBE_TOKEN }}"  >> $GITHUB_ENV
+        echo "PROJECT_NAME=${{ inputs.PROJECT_NAME }}"  >> $GITHUB_ENV
       shell: bash
   
     - name: Setup SonarQube
@@ -95,7 +96,7 @@ runs:
       run: sonar-scanner
         -Dsonar.host.url=${{ env.SONARQUBE_HOST }}
         -Dsonar.login=${{ env.SONARQUBE_TOKEN }}
-        -Dsonar.projectKey=${{ env.PROJECT_KEY }}
+        -Dsonar.projectKey=${{ env.PROJECT_NAME }}
         -Dsonar.sources=${{ github.workspace }}
         -Dsonar.pullrequest.key=${{github.event.pull_request.number}}
         -Dsonar.pullrequest.branch=${{github.head_ref}}
